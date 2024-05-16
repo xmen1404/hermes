@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <type_traits>
 
 namespace hermes::fastio {
 
