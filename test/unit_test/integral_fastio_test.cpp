@@ -1,4 +1,4 @@
-#include "hermes/fastio/fast_io.h"
+#include "hermes/fastio/fastio.h"
 #include <iostream>
 
 int main() {

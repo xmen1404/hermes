@@ -1,1 +1,3 @@
 /bazel-*
+/test/data/input
+/test/perf/log
