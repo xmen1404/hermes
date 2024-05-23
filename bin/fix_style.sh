@@ -5,7 +5,7 @@ if ! command -v clang-format &> /dev/null; then
     exit 1
 fi
 
-start_dir="/home/vspm/dev/cpp-hermes"
+start_dir="/home/vspm/dev/hermes"
 
 echo "Fixing style for $start_dir"
 find "$start_dir" -type f -name '*.cpp' -exec clang-format -style=file -i {} \;
