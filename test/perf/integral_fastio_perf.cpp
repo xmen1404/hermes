@@ -8,8 +8,10 @@
 
 signed main() {
   char data_path[] = "./test/data/input/integral_fastio_perf.input";
-  const int MAX_BUFFER_SIZE = 1 << 13;
-  hermes::fastio::IntegralFastIO<int64_t, MAX_BUFFER_SIZE> input(data_path);
+  const int MAX_BUFFER_SIZE = 1 << 30;
+  
+  hermes::fastio::IntegralFastIO<int64_t, MAX_BUFFER_SIZE> input;
+  input.Init(data_path);
 
   // simply read all input
   int64_t value;

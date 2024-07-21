@@ -56,6 +56,6 @@ if [ $? -eq 0 ]; then
   sudo perf stat -o $LOG_PATH --append $PERF_TARGET_OUTPUT
   cat $LOG_PATH | tail -n 100
 else
-  echo "Failed to generate perf target ${PERF_TARGET_NAME}."
+  echo "Failed to generate perf target ${PERF_TARGET_NAME}"
 fi
 

@@ -5,6 +5,13 @@ namespace hermes::random {
 
 class IntegralRandom {
 public:
+  static bool RandBool() noexcept {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::bernoulli_distribution d(0.5);     
+    return d(gen);
+  }
+
   static int
   RandInt32(int left = std::numeric_limits<int32_t>::min(),
             int right = std::numeric_limits<int32_t>::max()) noexcept {
