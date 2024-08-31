@@ -3,6 +3,7 @@ cc_library (
   deps = [
     "//hermes/fastio:fastio",
     "//hermes/random:random",
+    "//hermes/network:network",
     ":third-party",
   ],
   visibility = ["//visibility:public"],

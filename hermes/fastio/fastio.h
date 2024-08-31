@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdio>
 #include <fcntl.h>
 #include <type_traits>
@@ -18,9 +20,10 @@ public:
     Init(open(path, O_RDONLY));
   }
 
-  void Init(const int fd) {
+  void Init(const int fd) noexcept {
     fd_ = fd;
     file_offset_ = 0;
+    is_good_ = true;
 
     struct stat stat_buf;
     CHECK(fstat(fd, &stat_buf) == 0) << "Failed to init IntegralFastIO, could not get file size";  
@@ -30,20 +33,12 @@ public:
     ReadToBuffer();
   }
 
-  bool ReadOne(T &ret) {
-    // skip whitespace
-    while (begin_ != end_) {
-      if (buffer_[begin_] >= '0' && buffer_[begin_] <= '9')
-        break;
-      begin_ += 1;
-      if (begin_ == end_)
-        ReadToBuffer();
-    }
+  bool IsGood() const noexcept {
+    return is_good_;
+  }
 
-    if (begin_ == end_) [[unlikely]]
-      return false;
-
-    ret = 0;
+  T ReadOne() {
+    T ret = 0;
     while (begin_ != end_) {
       if (buffer_[begin_] < '0' || buffer_[begin_] > '9')
         break;
@@ -52,7 +47,15 @@ public:
         ReadToBuffer();
     }
 
-    return true;
+    while (begin_ != end_ && (buffer_[begin_] < '0' || buffer_[begin_] > '9')) {
+      begin_ += 1;
+      if (begin_ == end_) [[unlikely]]
+        ReadToBuffer();
+    }
+
+    is_good_ = !(begin_ == end_);
+
+    return ret;
   }
 
 private: 
@@ -72,6 +75,7 @@ private:
   }
 
 private:
+  bool is_good_{true};
   int begin_{0}, end_{0};
 
   void* buffer_base_{0};
