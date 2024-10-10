@@ -13,3 +13,11 @@ cc_binary (
     "//hermes:hermes"
   ],
 )
+
+cc_binary (
+  name = "pub_sub_test", 
+  srcs = ["pub_sub_test.cpp"],
+  deps = [
+    "//hermes:hermes"
+  ]
+)

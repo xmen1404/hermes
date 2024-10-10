@@ -25,20 +25,19 @@ public:
   virtual void Init(const hermes::config::Config& config) noexcept {
   }
   
-  virtual bool Send(const Message& msg) noexcept {
+  virtual bool Send(const Message& msg, const bool send_more = false) noexcept {
     // TODO: optimize copy here
     // if send_bytes = 0, try again
+    auto send_flags = zmq::send_flags::dontwait | (send_more ? zmq::send_flags::sndmore : zmq::send_flags::none);
     auto zmsg = zmq::message_t{msg.data, msg.size};
-    auto ret = socket_.send(zmsg, zmq::send_flags::none);
-    if (!ret.has_value() || !ret.value())
-        return false;
-    return true;
+    auto ret = socket_.send(zmsg, send_flags);
+    return ret.has_value();
   }
 
   virtual std::optional<Message> Recv() noexcept {
     // TODO: optimize copy here
     auto msg = zmq::mutable_buffer{buffer_, MAX_BUFFER_SIZE};
-    auto recv_size_opt = socket_.recv(msg);
+    auto recv_size_opt = socket_.recv(msg, zmq::recv_flags::dontwait);
     if (!recv_size_opt || !recv_size_opt.value().size)
       return {};
     return Message{buffer_, recv_size_opt.value().size};
