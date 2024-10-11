@@ -1,6 +1,10 @@
 common --show_timestamps
 common --color=yes
 
+# enable bazel module
+common --enable_bzlmod
+test --enable_bzlmod
+
 build --verbose_failures
 
 build --spawn_strategy=local
