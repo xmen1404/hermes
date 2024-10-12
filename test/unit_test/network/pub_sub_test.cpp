@@ -1,5 +1,5 @@
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include "hermes/network/pub.h"
 #include "hermes/network/sub.h"
@@ -14,10 +14,10 @@ signed main() {
 
   network::SubSocket sub;
   sub.Connect(pub_addr);
-  
+
   const std::string topic = "topicA";
   sub.AddTopic("");
-  //sub.AddTopic(topic);
+  // sub.AddTopic(topic);
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -30,4 +30,3 @@ signed main() {
     LOG(INFO) << "Received Message: " << msg;
   }
 }
-

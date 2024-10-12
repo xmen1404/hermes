@@ -6,11 +6,21 @@ cc_library (
 )
 
 cc_test (
+  name = "static_list_test",
+  srcs = ["static_list_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    ":third_party",
+  ],
+)
+
+cc_test (
   name = "stl_vector_test",
   srcs = ["stl_vector_test.cpp"],
   defines = ["CATCH_CONFIG_MAIN"],
   deps = [
     "//hermes/container:container",
-    ":third_party"
+    ":third_party",
   ],
 )

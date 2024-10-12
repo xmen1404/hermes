@@ -9,7 +9,7 @@
 signed main() {
   char data_path[] = "./test/data/input/integral_fastio_perf.input";
   const int MAX_BUFFER_SIZE = 1 << 2;
-  
+
   hermes::fastio::IntegralFastIO<int64_t, MAX_BUFFER_SIZE> input;
   input.Init(data_path);
 

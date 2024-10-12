@@ -1,11 +1,7 @@
 #pragma once
 
-#include <queue>
 #include <atomic>
 #include <memory>
+#include <queue>
 
-namespace hermes::container {
-
-
-
-} // namespace hermes::container
+namespace hermes::container {} // namespace hermes::container
