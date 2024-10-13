@@ -24,3 +24,13 @@ cc_test (
     ":third_party",
   ],
 )
+
+cc_test (
+  name = "stl_shared_ptr_test",
+  srcs = ["stl_shared_ptr_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    ":third_party",
+  ],
+)
