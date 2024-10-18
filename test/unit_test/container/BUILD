@@ -34,3 +34,14 @@ cc_test (
     ":third_party",
   ],
 )
+
+cc_test (
+  name = "spsc_queue_test",
+  srcs = ["spsc_queue_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    ":third_party",
+  ],
+)
+
