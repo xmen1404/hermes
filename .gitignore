@@ -1,5 +1,4 @@
 /bazel-*
-MODULE.bazel
 MODULE.bazel.lock
 
 /test/data/input

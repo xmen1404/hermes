@@ -2,7 +2,8 @@ common --show_timestamps
 common --color=yes
 
 # enable bazel module
-common --enable_bzlmod
+build --enable_bzlmod
+run --enable_bzlmod
 test --enable_bzlmod
 
 build --verbose_failures
