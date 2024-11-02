@@ -19,7 +19,7 @@ public:
       free_list_[i] = i;
   }
 
-  ~StaticListAllocator() {
+  ~StaticListAllocator() noexcept {
     operator delete[](data_);
     delete[] free_list_;
   }
@@ -87,52 +87,56 @@ public:
       return *this;
     }
 
-    bool operator==(const Iterator &rhs) const { return ptr_ == rhs.ptr_; }
+    bool operator==(const Iterator &rhs) const noexcept {
+      return ptr_ == rhs.ptr_;
+    }
 
-    bool operator!=(const Iterator &rhs) const { return ptr_ != rhs.ptr_; }
+    bool operator!=(const Iterator &rhs) const noexcept {
+      return ptr_ != rhs.ptr_;
+    }
 
-    explicit operator bool() const { return ptr_ != nullptr; }
+    explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
-    Node &Data() { return *ptr_; }
+    Node &Data() noexcept { return *ptr_; }
   };
 
 public:
   StaticList() {}
 
-  Iterator Begin() const { return {head_}; }
+  Iterator Begin() const noexcept { return {head_}; }
 
-  Iterator End() const { return {tail_}; }
+  Iterator End() const noexcept { return {tail_}; }
 
-  size_t Size() const { return size_; }
+  size_t Size() const noexcept { return size_; }
 
   typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
   PushBack(const T &value) {
-    return PushBackImpl(value);
+    return PushBackImpl(std::forward<const T>(value));
   }
 
   typename std::enable_if<std::is_move_constructible<T>::value, bool>::type
   PushBack(T &&value) {
-    return PushBackImpl(value);
+    return PushBackImpl(std::forward<T>(value));
   }
 
   typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
   PushFront(const T &value) {
-    return PushFrontImpl(value);
+    return PushFrontImpl(std::forward<const T>(value));
   }
 
   typename std::enable_if<std::is_move_constructible<T>::value, bool>::type
   PushFront(T &&value) {
-    return PushFrontImpl(value);
+    return PushFrontImpl(std::forward<T>(value));
   }
 
   typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
   Insert(Iterator it, const T &value) {
-    return InsertImpl(value);
+    return InsertImpl(std::forward<const T>(value));
   }
 
   typename std::enable_if<std::is_move_constructible<T>::value, bool>::type
   Insert(Iterator it, T &&value) {
-    return InsertImpl(value);
+    return InsertImpl(std::forward<T>(value));
   }
 
   bool Erase(Iterator it) {

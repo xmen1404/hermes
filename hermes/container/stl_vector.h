@@ -145,7 +145,8 @@ private:
       data_[i].~T();
     }
 
-    operator delete[](data_);
+    if (data_ != nullptr) [[likely]]
+      operator delete[](data_);
     data_ = new_data;
     max_size_ = new_max_size;
   }

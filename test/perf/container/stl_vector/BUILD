@@ -7,7 +7,16 @@ cc_library (
 
 cc_binary (
   name = "push_back_benchmark",
-  srcs = ["stl_vector_benchmark.cpp"],
+  srcs = ["push_back_benchmark.cpp"],
+  deps = [
+    "//hermes/container:container",
+    ":third_party",
+  ],
+)
+
+cc_binary (
+  name = "random_access_benchmark",
+  srcs = ["random_access_benchmark.cpp"],
   deps = [
     "//hermes/container:container",
     ":third_party",
