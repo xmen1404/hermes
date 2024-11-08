@@ -1,22 +1,25 @@
 #pragma once
 
 #include <cstring>
+#include <glog/logging.h>
 #include <iterator>
 #include <type_traits>
 #include <utility>
 
 namespace hermes::container {
 
+namespace detail {
+
 template <typename T, int MAX_SIZE> class StaticListAllocator {
 public:
   StaticListAllocator() {
-    data_ = static_cast<T *>(operator new[](MAX_SIZE * sizeof(T)));
+    data_ = static_cast<T *>(operator new[](sizeof(T) * MAX_SIZE));
     size_ = 0;
 
     free_cnt_ = MAX_SIZE;
-    free_list_ = new int[MAX_SIZE];
+    free_list_ = new T *[MAX_SIZE];
     for (auto i = 0; i < free_cnt_; ++i)
-      free_list_[i] = i;
+      free_list_[i] = data_ + i;
   }
 
   ~StaticListAllocator() noexcept {
@@ -30,15 +33,15 @@ public:
       return nullptr;
 
     free_cnt_ -= 1;
-    return data_ + free_list_[free_cnt_];
+    return free_list_[free_cnt_];
   }
 
+  /**
+   * @note: assume ptr align correctly with the buffer address (data_)
+   */
   bool Delete(T *ptr) noexcept {
-    auto diff = reinterpret_cast<size_t>(ptr) - reinterpret_cast<size_t>(data_);
-    if (diff < 0 || diff % sizeof(T) || free_cnt_ == MAX_SIZE) [[unlikely]]
-      return false;
-
-    free_list_[free_cnt_] = ptr - data_;
+    free_list_[free_cnt_] = ptr;
+    free_cnt_ += 1;
 
     return true;
   }
@@ -47,67 +50,121 @@ private:
   size_t size_;
   T *data_;
 
-  int *free_list_;
+  T **free_list_;
   int free_cnt_;
 };
 
-// TODO(@vspm): Optimize allocation size to power of 2
+struct ListNodeBase {
+  ListNodeBase *prev;
+  ListNodeBase *next;
+
+  void Hook(ListNodeBase *pos) noexcept {
+    if (pos == this) [[unlikely]]
+      return;
+
+    prev = pos->prev;
+    pos->prev->next = this;
+
+    next = pos;
+    pos->prev = this;
+  }
+
+  void UnHook() noexcept {
+    prev->next = next;
+    next->prev = prev;
+  }
+};
+
+struct ListNodeHeader : ListNodeBase {};
+
+template <typename T> struct ListNode : ListNodeBase { T value; };
+
+template <typename T> class ListIterator {
+public:
+  ListNodeBase *ptr_;
+
+public:
+  using iterator_category = std::bidirectional_iterator_tag;
+  using value_type = T;
+  using difference_type = std::ptrdiff_t;
+  using pointer = T *;
+  using reference = T &;
+
+public:
+  ListIterator(ListNodeBase *ptr) : ptr_{ptr} {}
+
+  reference operator*() { return static_cast<ListNode<T> *>(ptr_)->value; }
+
+  // prefix increment
+  ListIterator &operator++() noexcept {
+    ptr_ = ptr_->next;
+    return *this;
+  }
+
+  // postfix increment
+  ListIterator operator++(int) noexcept {
+    ListIterator temp = *this;
+    ptr_ = ptr_->next;
+    return temp;
+  }
+
+  // prefix decrement
+  ListIterator &operator--() noexcept {
+    ptr_ = ptr_->prev;
+    return *this;
+  }
+
+  // postfix decrement
+  ListIterator operator--(int) noexcept {
+    auto temp = *this;
+    ptr_ = ptr_->next;
+    return temp;
+  }
+
+  bool operator==(const ListIterator &rhs) const noexcept {
+    return ptr_ == rhs.ptr_;
+  }
+
+  bool operator!=(const ListIterator &rhs) const noexcept {
+    return ptr_ != rhs.ptr_;
+  }
+
+  explicit operator bool() const noexcept { return ptr_ != nullptr; }
+};
+
+} // namespace detail
+
 template <typename T, int MAX_SIZE> class StaticList {
-private:
-  struct Node {
-    T value;
-    Node *next_ptr{nullptr};
-    Node *prev_ptr{nullptr};
-  };
+public:
+  typedef detail::ListIterator<T> iterator;
 
 public:
-  class Iterator {
-  public:
-    Node *ptr_;
+  StaticList() {
+    head_ = static_cast<detail::ListNodeBase *>(allocator_.New());
 
-  public:
-    using iterator_category = std::bidirectional_iterator_tag;
-    using value_type = T;
-    using difference_type = std::ptrdiff_t;
-    using pointer = T *;
-    using reference = T &;
+    CHECK(head_ != nullptr)
+        << "Failed to init StaticList because of failed memory allocation";
 
-  public:
-    Iterator(Node *ptr) : ptr_{ptr} {}
+    new (head_) detail::ListNodeBase{};
+    head_->prev = head_->next = head_;
+    size_ = 0;
+  }
 
-    T &operator*() { return ptr_->value; }
+  StaticList(const StaticList &rhs) {
+    // implement me
+  }
 
-    Iterator &operator++() {
-      ptr_ = ptr_->next_ptr;
-      return *this;
-    }
+  StaticList(StaticList &&rhs) {
+    // implement me
+  }
 
-    Iterator &operator--() {
-      ptr_ = ptr_->prev_ptr;
-      return *this;
-    }
+  iterator Begin() const noexcept { return {head_->next}; }
 
-    bool operator==(const Iterator &rhs) const noexcept {
-      return ptr_ == rhs.ptr_;
-    }
-
-    bool operator!=(const Iterator &rhs) const noexcept {
-      return ptr_ != rhs.ptr_;
-    }
-
-    explicit operator bool() const noexcept { return ptr_ != nullptr; }
-
-    Node &Data() noexcept { return *ptr_; }
-  };
-
-public:
-  StaticList() {}
-
-  Iterator Begin() const noexcept { return {head_}; }
-
-  Iterator End() const noexcept { return {tail_}; }
+  iterator End() const noexcept { return {head_}; }
 
   size_t Size() const noexcept { return size_; }
+
+  bool IsEmpty() const noexcept { return !size_; }
 
   typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
   PushBack(const T &value) {
@@ -130,36 +187,23 @@ public:
   }
 
   typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
-  Insert(Iterator it, const T &value) {
-    return InsertImpl(std::forward<const T>(value));
+  Insert(iterator it, const T &value) {
+    return InsertImpl(it, std::forward<const T>(value));
   }
 
   typename std::enable_if<std::is_move_constructible<T>::value, bool>::type
-  Insert(Iterator it, T &&value) {
-    return InsertImpl(std::forward<T>(value));
+  Insert(iterator it, T &&value) {
+    return InsertImpl(it, std::forward<T>(value));
   }
 
-  bool Erase(Iterator it) {
-    if (!it)
+  bool Erase(iterator it) {
+    if (it == End())
       return true;
 
-    if (std::prev(it)) {
-      std::prev(it).Data().next_ptr = it.Data().next_ptr;
-    }
-    if (std::next(it)) {
-      std::next(it).Data().prev_ptr = it.Data().prev_ptr;
-    }
-
-    if (it == Begin()) {
-      head_ = it.Data().next_ptr;
-    }
-    if (it == End()) {
-      tail_ = it.Data().prev_ptr;
-    }
-
+    it.ptr_->UnHook();
     size_ -= 1;
 
-    return allocator_.Delete(&it.Data());
+    return allocator_.Delete(static_cast<detail::ListNode<T> *>(it.ptr_));
   }
 
 private:
@@ -168,18 +212,10 @@ private:
     if (data == nullptr) [[unlikely]]
       return false;
 
-    new (data) Node{.value{std::forward<decltype(value)>(value)},
-                    .next_ptr{nullptr},
-                    .prev_ptr{nullptr}};
+    new (data) detail::ListNode<T>{nullptr, nullptr,
+                                   std::forward<decltype(value)>(value)};
 
-    if (head_) [[likely]] {
-      tail_->next_ptr = data;
-      data->prev_ptr = tail_;
-      tail_ = data;
-    } else {
-      head_ = tail_ = data;
-    }
-
+    data->Hook(head_);
     size_ += 1;
 
     return true;
@@ -190,51 +226,27 @@ private:
     if (data == nullptr) [[unlikely]]
       return false;
 
-    new (data) Node{.value{std::forward<decltype(value)>(value)},
-                    .next_ptr{nullptr},
-                    .prev_ptr{nullptr}};
+    new (data) detail::ListNode<T>{nullptr, nullptr,
+                                   std::forward<decltype(value)>(value)};
 
-    if (head_) [[likely]] {
-      data->next_ptr = head_;
-      head_->prev_ptr = data;
-      head_ = data;
-    } else {
-      head_ = tail_ = data;
-    }
+    data->Hook(head_->next);
 
     size_ += 1;
 
     return true;
   }
 
-  bool InsertImpl(Iterator it, auto &&value) {
-    if (!it && head_ != nullptr) [[unlikely]]
-      return false;
-
+  bool InsertImpl(iterator it, auto &&value) {
     // TODO(@vspm): Handle case insert object using iterator from other list
 
     auto data = allocator_.New();
-    if (!data) [[unlikely]]
+    if (data == nullptr) [[unlikely]]
       return false;
 
-    new (data) Node{
-        .value{std::forward<decltype(value)>(value)},
-        .next_ptr{nullptr},
-        .prev_ptr{nullptr},
-    };
+    new (data) detail::ListNode<T>{nullptr, nullptr,
+                                   std::forward<decltype(value)>(value)};
 
-    if (head_ != nullptr) [[likely]] {
-      data->next_ptr = it.Data().next_ptr;
-      it.Data().next_ptr = data;
-      data->prev_ptr = &it.Data();
-
-      if (it == End())
-        tail_ = data;
-    }
-    if (head_ == nullptr) {
-      head_ = tail_ = data;
-    }
-
+    data->Hook(it.ptr_);
     size_ += 1;
 
     return true;
@@ -242,10 +254,10 @@ private:
 
 private:
   size_t size_{0};
-  Node *head_{nullptr};
-  Node *tail_{nullptr};
+  detail::ListNodeBase *head_{nullptr};
 
-  StaticListAllocator<Node, MAX_SIZE> allocator_{};
+  // need one mem block for dummy header node
+  detail::StaticListAllocator<detail::ListNode<T>, MAX_SIZE + 1> allocator_{};
 };
 
 } // namespace hermes::container

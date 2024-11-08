@@ -1,3 +1,4 @@
+#include <list>
 #include <random>
 #include <vector>
 
@@ -14,4 +15,6 @@ signed main() {
 
   for (auto i = 0; i < size; ++i) {
   }
+
+  std::list<int> list;
 }
