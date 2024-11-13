@@ -42,6 +42,7 @@ cc_test (
   defines = ["CATCH_CONFIG_MAIN"],
   deps = [
     "//hermes/container:container",
+    "//hermes/random:random",
     ":third_party",
   ],
 )

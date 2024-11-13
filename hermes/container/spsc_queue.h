@@ -1,112 +1,154 @@
 #pragma once
 
 #include <atomic>
-#include <fcntl.h>
 #include <memory>
+#include <new>
 #include <optional>
-#include <queue>
 #include <string>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
-#include <glog/logging.h>
 
 namespace hermes::container {
 
 /**
- * Single-Producer-Single-Consumer Queue mmap file backed
+ * Single Producer Single Consumer Queue
  */
-template <typename T> class SpscQueue {
+template <typename T, uint32_t MAX_SIZE> class SpscQueue {
 public:
-  SpscQueue() {}
+  SpscQueue(const SpscQueue &_) = delete;
+  SpscQueue &operator=(const SpscQueue &_) = delete;
+
+  SpscQueue() {
+    // allocate one extra slot for dummy node
+    data_ = static_cast<T *>(operator new[](sizeof(T) * (MAX_SIZE + 1)));
+    write_index_ = 0;
+    read_index_ = 0;
+  }
 
   ~SpscQueue() {
-    LOG(INFO) << "Closing mmap file data";
-
-    munmap(mmap_ptr_, file_size_);
-    close(fd_);
+    while (!IsEmpty())
+      PopFront();
+    operator delete[](data_);
   }
 
 public:
-  void Init(const std::string &file_path, const size_t file_size,
-            const bool reset) noexcept {
-    LOG(INFO) << "Initializing spsc_queue at path: " << file_path;
+  // Emplace value at the begin of the queue
+  // Only producer thread should call this method
+  template <typename... Args> bool Write(Args &&...args) {
+    auto curr_read = read_index_.load(std::memory_order_acquire);
+    auto curr_write = write_index_.load(std::memory_order_relaxed);
 
-    CHECK(file_size > HEADER_SIZE)
-        << "File size (" << file_size
-        << " bytes) should greater than header size (" << HEADER_SIZE
-        << " bytes)";
+    if ((curr_write + 1) % (MAX_SIZE + 1) != curr_read) {
+      new (data_ + curr_write) T{std::forward<decltype(args)>(args)...};
+      write_index_.store(curr_write + 1, std::memory_order_release);
+      return true;
+    }
 
-    file_size_ = file_size;
-    fd_ = open(file_path.c_str(), O_RDWR | O_CREAT, 0666);
-
-    CHECK(fd_ != -1) << "Error opening file";
-    if (reset)
-      CHECK(ftruncate(fd_, file_size) != -1) << "Error resizing file";
-
-    mmap_ptr_ = static_cast<char *>(
-        mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
-
-    CHECK(data_ != MAP_FAILED) << "Error mapping file at path: " << file_path;
-
-    head_idx_ = reinterpret_cast<std::atomic<int> *>(mmap_ptr_);
-    tail_idx_ = reinterpret_cast<std::atomic<int> *>(mmap_ptr_ + CACHE_LINE);
-
-    data_ = static_cast<T *>(mmap_ptr_ + HEADER_SIZE);
-    size_ = 0;
-    max_size_ = (file_size - 2 * sizeof(std::atomic<int>)) / sizeof(T);
-
-    head_idx_->store(0, std::memory_order_release);
-    tail_idx_->store(1, std::memory_order_release);
-
-    LOG(INFO) << "Successfully initialized spsc_queue at path: " << file_path;
+    // queue is full
+    return false;
   }
 
-  typename std::enable_if<std::is_copy_constructible<T>::value, bool>::type
-  Push(const T &data) {
-    return PushImpl(data);
+  // Read the last value from the queue
+  // Only consumer thread should can this method
+  bool Read(T &record) {
+    auto curr_write = write_index_.load(std::memory_order_acquire);
+    auto curr_read = read_index_.load(std::memory_order_relaxed);
+
+    if (curr_read != curr_write) {
+      if constexpr (std::is_move_assignable<T>::value)
+        record = std::move(data_[curr_read]);
+      else
+        record = data_[curr_read];
+
+      // destroy old object
+      data_[curr_read].~T();
+
+      read_index_.store((curr_read + 1) % (MAX_SIZE + 1),
+                        std::memory_order_release);
+      return true;
+    }
+
+    // queue is empty
+    return false;
   }
 
-  typename std::enable_if<std::is_move_constructible<T>::value, void>::type
-  Push(T &&data) {
-    return PushImpl(data);
+  std::optional<T> Read() {
+    auto curr_write = write_index_.load(std::memory_order_acquire);
+    auto curr_read = read_index_.load(std::memory_order_relaxed);
+
+    if (curr_read != curr_write) {
+      auto ret = std::optional<T>{};
+      if constexpr (std::is_move_constructible<T>::value)
+        ret = std::move(data_[curr_read]);
+      else
+        ret = data_[curr_read];
+
+      // destroy old object
+      data_[curr_read].~T();
+      read_index_.store((curr_read + 1) % (MAX_SIZE + 1),
+                        std::memory_order_release);
+
+      return ret;
+    }
+
+    // queue is empty
+    return {};
   }
 
-  std::optional<T> Pop() {
-    // TODO: implement
+  // queue must not be empty
+  void PopFront() noexcept {
+    auto curr_read = read_index_.load(std::memory_order_relaxed);
+    data_[curr_read].~T();
+    read_index_.store((curr_read + 1) % (MAX_SIZE + 1),
+                      std::memory_order_release);
   }
 
-private:
-  bool PushImpl(auto &&value) {
-    auto head = head_idx_->load(std::memory_order_acquire);
-    auto tail = tail_idx_->load(std::memory_order_acquire);
-    if (head == tail) [[unlikely]]
-      return false;
-
-    auto *obj_ptr = static_cast<T *>(data_ + tail);
-    new (obj_ptr) T{std::forward<decltype(value)>(value)};
-
-    auto new_tail = (tail + 1) % max_size_;
-    tail_idx_->store(new_tail, std::memory_order_release);
-
+  template <typename Functor> bool ConsumeOne(const Functor &functor) {
     return true;
   }
 
-private:
-  static constexpr size_t CACHE_LINE = 64;
-  static constexpr size_t HEADER_SIZE = 2 * CACHE_LINE;
+  template <typename Functor> bool ConsumeAll(const Functor &functor) {
+    return true;
+  }
+
+  bool ReadAvailable() const noexcept { return IsEmpty(); }
+
+  bool WriteAvailable() const noexcept {
+    const auto curr_read = read_index_.load(std::memory_order_acquire);
+    const auto curr_write = write_index_.load(std::memory_order_acquire);
+    return (curr_write + 1) % (MAX_SIZE + 1);
+  }
+
+  bool IsEmpty() const noexcept {
+    const auto curr_read = read_index_.load(std::memory_order_acquire);
+    const auto curr_write = write_index_.load(std::memory_order_acquire);
+    return curr_read != curr_write;
+  }
+
+  size_t SizeGuess() const noexcept {
+    const auto curr_read = read_index_.load(std::memory_order_acquire);
+    const auto curr_write = write_index_.load(std::memory_order_acquire);
+
+    auto ret = curr_write - curr_read;
+    return ret < 0 ? (ret + MAX_SIZE + 1) : ret;
+  }
+
+  static constexpr uint32_t Capacity() noexcept { return MAX_SIZE; }
 
 private:
-  int fd_;
-  size_t file_size_;
-  char *mmap_ptr_;
+  using AtomicIndex = std::atomic<uint32_t>;
+  static constexpr std::size_t CACHE_LINE_SIZE =
+#ifdef __cpp_lib_hardware_interference_size
+      std::hardware_destructive_interference_size;
+#else
+      64;
+#endif
 
+private:
   T *data_;
-  int max_size_;
-  int size_;
-  std::atomic<int> *head_idx_;
-  std::atomic<int> *tail_idx_;
+
+  alignas(CACHE_LINE_SIZE) AtomicIndex write_index_;
+  alignas(CACHE_LINE_SIZE) AtomicIndex read_index_;
+
+  char pad_0_[CACHE_LINE_SIZE - sizeof(AtomicIndex)];
 };
 
 } // namespace hermes::container
