@@ -6,10 +6,12 @@ cc_library (
 )
 
 cc_binary (
-  name = "push_bm",
-  srcs = ["push_bm.cpp"],
+  name = "fastio_bm",
+  srcs = ["fastio_bm.cpp"],
   deps = [
-    "//hermes/container:container",
+    "//hermes/io:fastio",
+    "//hermes/random:random",
     ":third_party",
-  ],
+  ]
 )
+

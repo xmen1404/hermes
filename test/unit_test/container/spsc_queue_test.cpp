@@ -22,17 +22,19 @@ TEST_CASE("Sequential Write Test") {
   }
 
   REQUIRE(queue.SizeGuess() == data_size);
+  REQUIRE(queue.IsEmpty() == false);
 
   auto idx = 0;
   while (!queue.IsEmpty()) {
     int val;
     REQUIRE(queue.Read(val));
     REQUIRE(data[idx] == val);
+    idx += 1;
   }
 }
 
 TEST_CASE("Multi-thread Write/Read Test") {
-  constexpr uint32_t data_size = 1024;
+  constexpr uint32_t data_size = 1e5;
   std::vector<int> data;
 
   for (uint32_t i = 0; i < data_size; ++i) {
@@ -43,16 +45,19 @@ TEST_CASE("Multi-thread Write/Read Test") {
   SpscQueue<int, data_size> queue;
 
   std::thread sender_th([&]() {
-    for (uint32_t i = 0; i < data_size; ++i)
-      queue.Write(data[i]);
+    for (uint32_t i = 0; i < data_size; ++i) {
+      REQUIRE(queue.WriteAvailable());
+      REQUIRE(queue.Write(data[i]));
+    }
   });
   sender_th.join();
 
   std::thread receiver_th([&]() {
     uint32_t idx = 0;
     while (idx < data_size) {
-      int val;
-      if (queue.Read(val)) {
+      if (queue.ReadAvailable()) {
+        int val;
+        REQUIRE(queue.Read(val));
         REQUIRE(val == data[idx]);
         idx += 1;
       }

@@ -6,10 +6,11 @@ cc_library (
 )
 
 cc_binary (
-  name = "push_bm",
-  srcs = ["push_bm.cpp"],
+  name = "job_manager_bm",
+  srcs = ["job_manager_bm.cpp", "job_manager.h"],
   deps = [
-    "//hermes/container:container",
+    "//hermes/random:random",
     ":third_party",
   ],
+  data = ["job.txt"],
 )

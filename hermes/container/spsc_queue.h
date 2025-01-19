@@ -33,12 +33,13 @@ public:
   // Emplace value at the begin of the queue
   // Only producer thread should call this method
   template <typename... Args> bool Write(Args &&...args) {
-    auto curr_read = read_index_.load(std::memory_order_acquire);
-    auto curr_write = write_index_.load(std::memory_order_relaxed);
+    const auto curr_read = read_index_.load(std::memory_order_acquire);
+    const auto curr_write = write_index_.load(std::memory_order_relaxed);
+    const auto next_write = (curr_write + 1) % (MAX_SIZE + 1);
 
-    if ((curr_write + 1) % (MAX_SIZE + 1) != curr_read) {
+    if (next_write != curr_read) {
       new (data_ + curr_write) T{std::forward<decltype(args)>(args)...};
-      write_index_.store(curr_write + 1, std::memory_order_release);
+      write_index_.store(next_write, std::memory_order_release);
       return true;
     }
 
@@ -109,18 +110,18 @@ public:
     return true;
   }
 
-  bool ReadAvailable() const noexcept { return IsEmpty(); }
+  bool ReadAvailable() const noexcept { return !IsEmpty(); }
 
   bool WriteAvailable() const noexcept {
     const auto curr_read = read_index_.load(std::memory_order_acquire);
     const auto curr_write = write_index_.load(std::memory_order_acquire);
-    return (curr_write + 1) % (MAX_SIZE + 1);
+    return (curr_write + 1) % (MAX_SIZE + 1) != curr_read;
   }
 
   bool IsEmpty() const noexcept {
     const auto curr_read = read_index_.load(std::memory_order_acquire);
     const auto curr_write = write_index_.load(std::memory_order_acquire);
-    return curr_read != curr_write;
+    return curr_read == curr_write;
   }
 
   size_t SizeGuess() const noexcept {

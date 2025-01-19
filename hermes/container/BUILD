@@ -8,7 +8,7 @@ cc_library (
 cc_library (
   name = "container",
   srcs = glob(["*.h"]),
-  deps = [":third_party"], 
+  deps = [":third_party"],
   visibility = ["//visibility:public"]
 )
 

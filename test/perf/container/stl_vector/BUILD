@@ -6,8 +6,8 @@ cc_library (
 )
 
 cc_binary (
-  name = "push_back_benchmark",
-  srcs = ["push_back_benchmark.cpp"],
+  name = "push_back_bm",
+  srcs = ["push_back_bm.cpp"],
   deps = [
     "//hermes/container:container",
     ":third_party",
@@ -15,8 +15,8 @@ cc_binary (
 )
 
 cc_binary (
-  name = "random_access_benchmark",
-  srcs = ["random_access_benchmark.cpp"],
+  name = "random_access_bm",
+  srcs = ["random_access_bm.cpp"],
   deps = [
     "//hermes/container:container",
     ":third_party",

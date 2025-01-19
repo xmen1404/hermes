@@ -6,10 +6,11 @@ cc_library (
 )
 
 cc_binary (
-  name = "push_bm",
-  srcs = ["push_bm.cpp"],
+  name = "insert_bm",
+  srcs = ["insert_bm.cpp"],
   deps = [
     "//hermes/container:container",
     ":third_party",
   ],
 )
+
