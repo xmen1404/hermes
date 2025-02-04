@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <glog/logging.h>
 #include <list>
 #include <type_traits>
@@ -56,7 +57,7 @@ public:
   explicit HashMapIterator(HashMapNodeBase *ptr) : ptr_(ptr) {}
 
   // @ASSUME: current iterator is HashMapNode, not HashMapNodeHeader
-  size_t BucketId() const noexcept {
+  inline size_t BucketId() const noexcept {
     return static_cast<HashMapNode<Key, T> *>(ptr_)->bucket_id;
   }
 
@@ -113,7 +114,7 @@ public:
  * Implementation of std::unordered_map
  */
 template <class Key, class T, class Hash = std::hash<Key>,
-          double LOAD_FACTOR = 0.75>
+          double LOAD_FACTOR = 1.00>
 class HashMap {
 public:
   typedef detail::HashMapIterator<Key, T> iterator;
@@ -132,13 +133,11 @@ public:
 
       delete static_cast<Node *>(node_base_ptr);
     }
-    delete head_;
   }
 
   // TODO(@vspm): implement other ctor overload
 
   void Init() {
-    head_ = new NodeBase{};
     head_->next = head_->prev = head_;
 
     size_ = 0;
@@ -191,20 +190,21 @@ public:
 
   iterator Erase(iterator it) {
     if (it == End())
-      return {head_};
+      return iterator{head_};
 
-    it->UnHook();
+    const auto bucket_id = KeyToBucketId(it->first);
+    auto *next_ptr = it.ptr_->next;
+    it.ptr_->UnHook();
 
-    auto nxt_it = iterator{it->next};
-    const auto bucket_id = KeyToBucketId(nxt_it->first);
-    if (buckets_[bucket_id] == it.ptr_)
+    if (it.ptr_ == buckets_[bucket_id])
       buckets_[bucket_id] =
-          (nxt_it.ptr_ != head_ && nxt_it.BucketId() == bucket_id) ? nxt_it
-                                                                   : nullptr;
+          (next_ptr != head_ && iterator{next_ptr}.BucketId() == bucket_id)
+              ? next_ptr
+              : nullptr;
 
     delete static_cast<Node *>(it.ptr_);
 
-    return nxt_it;
+    return iterator{next_ptr};
   }
 
   // @RETURN: iterator points to first pair (key, value); End() iterator if
@@ -219,7 +219,7 @@ public:
     return iterator{head_};
   }
 
-  iterator End() noexcept { return {head_}; }
+  inline iterator End() noexcept { return iterator{head_}; }
 
   T &operator[](const Key &key) {
     static_assert(std::is_default_constructible<T>::value,
@@ -287,7 +287,8 @@ private:
   size_t size_;
   size_t bucket_cnt_;
 
-  NodeBase *head_;
+  NodeBase dummy_{};
+  NodeBase *head_{&dummy_};
   std::vector<NodeBase *> buckets_;
 };
 

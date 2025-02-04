@@ -14,3 +14,23 @@ cc_binary (
   ],
 )
 
+cc_binary (
+  name = "random_access_bm",
+  srcs = ["random_access_bm.cpp"],
+  deps = [
+    "//hermes/container:container",
+    "//hermes/random:random",
+    ":third_party",
+  ],
+)
+
+cc_binary (
+  name = "erase_bm",
+  srcs = ["erase_bm.cpp"],
+  deps = [
+    "//hermes/container:container",
+    "//hermes/random:random",
+    ":third_party",
+  ],
+)
+

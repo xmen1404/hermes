@@ -2,6 +2,8 @@
 
 #include "hermes/container/stl_hash_map.h"
 
+#include <memory>
+
 namespace bm = benchmark;
 
 static void hermesHashMapIntBM(bm::State &state) {
@@ -29,6 +31,7 @@ static void stlHashMapIntBM(bm::State &state) {
     bm::DoNotOptimize(mp);
   }
 }
+
 BENCHMARK(stlHashMapIntBM)->Range(0, 32768);
 BENCHMARK(hermesHashMapIntBM)->Range(0, 32768);
 
@@ -64,7 +67,7 @@ static void stlHashMapBigStructBM(bm::State &state) {
     bm::DoNotOptimize(mp);
   }
 }
-BENCHMARK(stlHashMapBigStructBM)->Range(0, 32768);
-BENCHMARK(hermesHashMapBigStructBM)->Range(0, 32768);
+// BENCHMARK(stlHashMapBigStructBM)->Range(0, 32768);
+// BENCHMARK(hermesHashMapBigStructBM)->Range(0, 32768);
 
 BENCHMARK_MAIN();

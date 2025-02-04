@@ -57,3 +57,14 @@ cc_test (
     ":third_party",
   ],
 )
+
+cc_test (
+  name = "smart_pointer",
+  srcs = ["smart_pointer_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    "//hermes/random:random",
+    ":third_party",
+  ],
+)
