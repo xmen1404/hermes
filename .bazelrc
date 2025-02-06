@@ -5,6 +5,7 @@ common --color=yes
 build --enable_bzlmod
 run --enable_bzlmod
 test --enable_bzlmod
+test --test_arg=--list-tests
 
 build --verbose_failures
 
