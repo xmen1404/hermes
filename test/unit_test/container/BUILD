@@ -59,7 +59,7 @@ cc_test (
 )
 
 cc_test (
-  name = "smart_pointer",
+  name = "smart_pointer_test",
   srcs = ["smart_pointer_test.cpp"],
   defines = ["CATCH_CONFIG_MAIN"],
   deps = [
@@ -68,3 +68,26 @@ cc_test (
     ":third_party",
   ],
 )
+
+cc_test (
+  name = "optional_test",
+  srcs = ["optional_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    "//hermes/random:random",
+    ":third_party",
+  ],
+)
+
+cc_test (
+  name = "any_test",
+  srcs = ["any_test.cpp"],
+  defines = ["CATCH_CONFIG_MAIN"],
+  deps = [
+    "//hermes/container:container",
+    "//hermes/random:random",
+    ":third_party",
+  ],
+)
+
