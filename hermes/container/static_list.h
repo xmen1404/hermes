@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstring>
 #include <glog/logging.h>
+
+#include <cstring>
 #include <iterator>
 #include <type_traits>
 #include <utility>
@@ -10,16 +11,16 @@ namespace hermes::container {
 
 namespace detail {
 
-template <typename T, int MAX_SIZE> class StaticListAllocator {
-public:
+template <typename T, int MAX_SIZE>
+class StaticListAllocator {
+ public:
   StaticListAllocator() {
     data_ = static_cast<T *>(operator new[](sizeof(T) * MAX_SIZE));
     size_ = 0;
 
     free_cnt_ = MAX_SIZE;
     free_list_ = new T *[MAX_SIZE];
-    for (auto i = 0; i < free_cnt_; ++i)
-      free_list_[i] = data_ + i;
+    for (auto i = 0; i < free_cnt_; ++i) free_list_[i] = data_ + i;
   }
 
   ~StaticListAllocator() noexcept {
@@ -27,7 +28,7 @@ public:
     delete[] free_list_;
   }
 
-public:
+ public:
   T *New() noexcept {
     if (!free_cnt_) [[unlikely]]
       return nullptr;
@@ -46,7 +47,7 @@ public:
     return true;
   }
 
-private:
+ private:
   size_t size_;
   T *data_;
 
@@ -77,20 +78,24 @@ struct ListNodeBase {
 
 struct ListNodeHeader : ListNodeBase {};
 
-template <typename T> struct ListNode : ListNodeBase { T value; };
+template <typename T>
+struct ListNode : ListNodeBase {
+  T value;
+};
 
-template <typename T> class ListIterator {
-public:
+template <typename T>
+class ListIterator {
+ public:
   ListNodeBase *ptr_;
 
-public:
+ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using value_type = T;
   using difference_type = std::ptrdiff_t;
   using pointer = T *;
   using reference = T &;
 
-public:
+ public:
   ListIterator(ListNodeBase *ptr) : ptr_{ptr} {}
 
   reference operator*() { return static_cast<ListNode<T> *>(ptr_)->value; }
@@ -132,13 +137,14 @@ public:
   explicit operator bool() const noexcept { return ptr_ != nullptr; }
 };
 
-} // namespace detail
+}  // namespace detail
 
-template <typename T, int MAX_SIZE> class StaticList {
-public:
+template <typename T, int MAX_SIZE>
+class StaticList {
+ public:
   typedef detail::ListIterator<T> iterator;
 
-public:
+ public:
   StaticList() {
     head_ = static_cast<detail::ListNodeBase *>(allocator_.New());
 
@@ -197,8 +203,7 @@ public:
   }
 
   bool Erase(iterator it) {
-    if (it == End())
-      return true;
+    if (it == End()) return true;
 
     it.ptr_->UnHook();
     size_ -= 1;
@@ -206,7 +211,7 @@ public:
     return allocator_.Delete(static_cast<detail::ListNode<T> *>(it.ptr_));
   }
 
-private:
+ private:
   bool PushBackImpl(auto &&value) {
     auto data = allocator_.New();
     if (data == nullptr) [[unlikely]]
@@ -252,7 +257,7 @@ private:
     return true;
   }
 
-private:
+ private:
   size_t size_{0};
   detail::ListNodeBase *head_{nullptr};
 
@@ -260,4 +265,4 @@ private:
   detail::StaticListAllocator<detail::ListNode<T>, MAX_SIZE + 1> allocator_{};
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

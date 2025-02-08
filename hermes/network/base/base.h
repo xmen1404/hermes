@@ -1,10 +1,10 @@
 #pragma once
 
+#include <glog/logging.h>
+
 #include <optional>
 #include <string>
 #include <string_view>
-
-#include <glog/logging.h>
 
 #include "hermes/config/config.h"
 #include "hermes/network/zmq/zmq.hpp"
@@ -17,12 +17,12 @@ struct Message {
 };
 
 class Socket {
-public:
+ public:
   Socket(int thread_num, zmq::socket_type type)
       : context_{thread_num}, socket_{context_, type} {}
   ~Socket() = default;
 
-public:
+ public:
   virtual void Init(const hermes::config::Config &config) noexcept {}
 
   virtual bool Send(const Message &msg, const bool send_more = false) noexcept {
@@ -40,8 +40,7 @@ public:
     // TODO: optimize copy here
     auto msg = zmq::mutable_buffer{buffer_, MAX_BUFFER_SIZE};
     auto recv_size_opt = socket_.recv(msg, zmq::recv_flags::dontwait);
-    if (!recv_size_opt || !recv_size_opt.value().size)
-      return {};
+    if (!recv_size_opt || !recv_size_opt.value().size) return {};
     return Message{buffer_, recv_size_opt.value().size};
   }
 
@@ -49,19 +48,19 @@ public:
 
   void Bind(const std::string &addr) noexcept { socket_.bind(addr); }
 
-public:
+ public:
   zmq::context_t &GetContext() noexcept { return context_; }
 
   zmq::socket_t &GetSocket() noexcept { return socket_; }
 
-protected:
+ protected:
   static constexpr int MAX_BUFFER_SIZE = 1 << 20;
 
-protected:
+ protected:
   zmq::context_t context_;
   zmq::socket_t socket_;
 
   char buffer_[MAX_BUFFER_SIZE];
 };
 
-} // namespace hermes::network
+}  // namespace hermes::network

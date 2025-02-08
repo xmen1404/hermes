@@ -1,4 +1,5 @@
 #include <benchmark/benchmark.h>
+
 #include <random>
 
 #include "hermes/container/stl_vector.h"
@@ -20,8 +21,7 @@ static void BM_hermes_vector(bm::State &state) {
   }
 
   hermes::container::Vector<int> vi;
-  for (auto i = 0; i < size; ++i)
-    vi.PushBack(i);
+  for (auto i = 0; i < size; ++i) vi.PushBack(i);
 
   for (auto _ : state) {
     for (auto i = 0; i < size; ++i) {
@@ -44,8 +44,7 @@ static void BM_stl_vector(bm::State &state) {
   }
 
   std::vector<int> vi;
-  for (auto i = 0; i < size; ++i)
-    vi.push_back(i);
+  for (auto i = 0; i < size; ++i) vi.push_back(i);
 
   for (auto _ : state) {
     for (auto i = 0; i < size; ++i) {

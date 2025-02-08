@@ -1,6 +1,6 @@
-#include <catch2/catch_test_macros.hpp>
-
 #include "hermes/container/stl_hash_map.h"
+
+#include <catch2/catch_test_macros.hpp>
 
 using namespace hermes::container;
 

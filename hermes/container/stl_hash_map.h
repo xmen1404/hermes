@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cassert>
 #include <glog/logging.h>
+
+#include <cassert>
 #include <list>
 #include <type_traits>
 #include <vector>
@@ -34,7 +35,8 @@ struct HashMapNodeBase {
 
 struct HashMapNodeHeader : HashMapNodeBase {};
 
-template <class Key, class T> struct HashMapNode : HashMapNodeBase {
+template <class Key, class T>
+struct HashMapNode : HashMapNodeBase {
   std::pair<Key, T> p_data;
   size_t bucket_id;
 
@@ -42,18 +44,19 @@ template <class Key, class T> struct HashMapNode : HashMapNodeBase {
       : p_data(std::move(p_data)), bucket_id(bucket_id) {}
 };
 
-template <class Key, class T> class HashMapIterator {
-public:
+template <class Key, class T>
+class HashMapIterator {
+ public:
   HashMapNodeBase *ptr_;
 
-public:
+ public:
   using iterator_category = std::bidirectional_iterator_tag;
   using value_type = std::pair<Key, T>;
   using difference_type = std::ptrdiff_t;
   using pointer = std::pair<Key, T> *;
   using reference = std::pair<Key, T> &;
 
-public:
+ public:
   explicit HashMapIterator(HashMapNodeBase *ptr) : ptr_(ptr) {}
 
   // @ASSUME: current iterator is HashMapNode, not HashMapNodeHeader
@@ -108,7 +111,7 @@ public:
   }
 };
 
-} // namespace detail
+}  // namespace detail
 
 /**
  * Implementation of std::unordered_map
@@ -116,13 +119,13 @@ public:
 template <class Key, class T, class Hash = std::hash<Key>,
           double LOAD_FACTOR = 1.00>
 class HashMap {
-public:
+ public:
   typedef detail::HashMapIterator<Key, T> iterator;
   typedef detail::HashMapNode<Key, T> Node;
   typedef detail::HashMapNodeBase NodeBase;
   typedef std::pair<Key, T> PType;
 
-public:
+ public:
   HashMap() {}
 
   ~HashMap() {
@@ -146,7 +149,7 @@ public:
     buckets_.push_back(nullptr);
   }
 
-public:
+ public:
   inline bool IsEmpty() const noexcept { return !size_; }
 
   inline size_t Size() const noexcept { return size_; }
@@ -160,16 +163,13 @@ public:
 
   iterator Find(const Key &key) const noexcept {
     const auto bucket_id = KeyToBucketId(key);
-    if (buckets_[bucket_id] == nullptr)
-      return iterator{head_};
+    if (buckets_[bucket_id] == nullptr) return iterator{head_};
 
     auto *ptr = buckets_[bucket_id];
     while (ptr != head_) {
       const auto *node_ptr = static_cast<Node *>(ptr);
-      if (node_ptr->bucket_id != bucket_id)
-        break;
-      if (node_ptr->p_data.first == key)
-        return iterator{ptr};
+      if (node_ptr->bucket_id != bucket_id) break;
+      if (node_ptr->p_data.first == key) return iterator{ptr};
       ptr = ptr->next;
     }
     return iterator{head_};
@@ -189,8 +189,7 @@ public:
   }
 
   iterator Erase(iterator it) {
-    if (it == End())
-      return iterator{head_};
+    if (it == End()) return iterator{head_};
 
     const auto bucket_id = KeyToBucketId(it->first);
     auto *next_ptr = it.ptr_->next;
@@ -232,7 +231,7 @@ public:
     return it->second;
   }
 
-private:
+ private:
   inline iterator InsertNew(PType &&p_data) {
     auto *node = new Node{std::move(p_data), 0};
     InsertNew(node);
@@ -253,8 +252,7 @@ private:
           break;
         }
       }
-      if (ptr == nullptr)
-        ptr = head_;
+      if (ptr == nullptr) ptr = head_;
     }
 
     node_base_ptr->Hook(ptr);
@@ -283,7 +281,7 @@ private:
     return Hash()(key) % bucket_cnt_;
   }
 
-private:
+ private:
   size_t size_;
   size_t bucket_cnt_;
 
@@ -292,4 +290,4 @@ private:
   std::vector<NodeBase *> buckets_;
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

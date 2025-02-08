@@ -7,13 +7,13 @@
 namespace hermes::network {
 
 class RouterSocket : public Socket {
-public:
+ public:
   RouterSocket() : Socket(1, zmq::socket_type::router) {
     LOG(INFO) << "Initializing ROUTER socket";
   }
 
-public:
+ public:
   void Init(const hermes::config::Config &config) noexcept override {}
 };
 
-} // namespace hermes::network
+}  // namespace hermes::network

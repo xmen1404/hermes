@@ -1,6 +1,6 @@
-#include <catch2/catch_test_macros.hpp>
-
 #include "hermes/container/smart_pointer.h"
+
+#include <catch2/catch_test_macros.hpp>
 
 using namespace hermes::container;
 
@@ -32,7 +32,7 @@ TEST_CASE("RefCnt Test", "[SharedPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };
@@ -68,7 +68,7 @@ TEST_CASE("Reset Test", "[SharedPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };
@@ -91,7 +91,7 @@ TEST_CASE("Reset with new pointer Test", "[SharedPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };
@@ -116,7 +116,7 @@ TEST_CASE("Copy and Move Test", "[SharedPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };
@@ -144,7 +144,7 @@ TEST_CASE("Self-contained Lifetime Test", "[SharedPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };
@@ -224,7 +224,7 @@ TEST_CASE("RefCnt Test", "[WeakPtr]") {
   class TestClass {
     int *del_cnt_;
 
-  public:
+   public:
     TestClass(int *ptr) : del_cnt_{ptr} {}
     ~TestClass() { (*del_cnt_)++; }
   };

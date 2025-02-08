@@ -16,9 +16,9 @@
 #define ZMQ_VERSION_MINOR 3
 #define ZMQ_VERSION_PATCH 6
 
-#define ZMQ_MAKE_VERSION(major, minor, patch)                                  \
+#define ZMQ_MAKE_VERSION(major, minor, patch) \
   ((major)*10000 + (minor)*100 + (patch))
-#define ZMQ_VERSION                                                            \
+#define ZMQ_VERSION \
   ZMQ_MAKE_VERSION(ZMQ_VERSION_MAJOR, ZMQ_VERSION_MINOR, ZMQ_VERSION_PATCH)
 
 #ifdef __cplusplus
@@ -217,11 +217,11 @@ ZMQ_EXPORT int zmq_ctx_destroy(void *context_);
 typedef struct zmq_msg_t {
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
   __declspec(align(8)) unsigned char _[64];
-#elif defined(_MSC_VER) &&                                                     \
+#elif defined(_MSC_VER) && \
     (defined(_M_IX86) || defined(_M_ARM_ARMV7VE) || defined(_M_ARM))
   __declspec(align(4)) unsigned char _[64];
-#elif defined(__GNUC__) || defined(__INTEL_COMPILER) ||                        \
-    (defined(__SUNPRO_C) && __SUNPRO_C >= 0x590) ||                            \
+#elif defined(__GNUC__) || defined(__INTEL_COMPILER) || \
+    (defined(__SUNPRO_C) && __SUNPRO_C >= 0x590) ||     \
     (defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x590)
   unsigned char _[64] __attribute__((aligned(sizeof(void *))));
 #else
@@ -757,7 +757,7 @@ ZMQ_EXPORT int zmq_ppoll(zmq_pollitem_t *items_, int nitems_, long timeout_,
                          const void *sigmask_);
 #endif
 
-#endif // ZMQ_BUILD_DRAFT_API
+#endif  // ZMQ_BUILD_DRAFT_API
 
 #undef ZMQ_EXPORT
 

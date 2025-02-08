@@ -11,8 +11,9 @@ namespace hermes::container {
 /**
  * Single Producer Single Consumer Queue
  */
-template <typename T, uint32_t MAX_SIZE> class SpscQueue {
-public:
+template <typename T, uint32_t MAX_SIZE>
+class SpscQueue {
+ public:
   SpscQueue(const SpscQueue &_) = delete;
   SpscQueue &operator=(const SpscQueue &_) = delete;
 
@@ -24,15 +25,15 @@ public:
   }
 
   ~SpscQueue() {
-    while (!IsEmpty())
-      PopFront();
+    while (!IsEmpty()) PopFront();
     operator delete[](data_);
   }
 
-public:
+ public:
   // Emplace value at the begin of the queue
   // Only producer thread should call this method
-  template <typename... Args> bool Write(Args &&...args) {
+  template <typename... Args>
+  bool Write(Args &&...args) {
     const auto curr_read = read_index_.load(std::memory_order_acquire);
     const auto curr_write = write_index_.load(std::memory_order_relaxed);
     const auto next_write = (curr_write + 1) % (MAX_SIZE + 1);
@@ -102,11 +103,13 @@ public:
                       std::memory_order_release);
   }
 
-  template <typename Functor> bool ConsumeOne(const Functor &functor) {
+  template <typename Functor>
+  bool ConsumeOne(const Functor &functor) {
     return true;
   }
 
-  template <typename Functor> bool ConsumeAll(const Functor &functor) {
+  template <typename Functor>
+  bool ConsumeAll(const Functor &functor) {
     return true;
   }
 
@@ -134,7 +137,7 @@ public:
 
   static constexpr uint32_t Capacity() noexcept { return MAX_SIZE; }
 
-private:
+ private:
   using AtomicIndex = std::atomic<uint32_t>;
   static constexpr std::size_t CACHE_LINE_SIZE =
 #ifdef __cpp_lib_hardware_interference_size
@@ -143,7 +146,7 @@ private:
       64;
 #endif
 
-private:
+ private:
   T *data_;
 
   alignas(CACHE_LINE_SIZE) AtomicIndex write_index_;
@@ -152,4 +155,4 @@ private:
   char pad_0_[CACHE_LINE_SIZE - sizeof(AtomicIndex)];
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

@@ -10,8 +10,7 @@ static void hermesHashMapIntBM(bm::State &state) {
   hermes::container::HashMap<int, int> mp;
   mp.Init();
 
-  for (auto i = 0; i < size; ++i)
-    mp.Insert({i, i});
+  for (auto i = 0; i < size; ++i) mp.Insert({i, i});
 
   for (auto _ : state) {
     auto id = hermes::random::IntegralRandom::RandT<int>(0, size - 1);

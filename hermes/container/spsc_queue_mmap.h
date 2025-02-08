@@ -1,24 +1,25 @@
 #pragma once
 
-#include <atomic>
 #include <fcntl.h>
-#include <memory>
-#include <optional>
-#include <queue>
-#include <string>
+#include <glog/logging.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <glog/logging.h>
+#include <atomic>
+#include <memory>
+#include <optional>
+#include <queue>
+#include <string>
 
 namespace hermes::container {
 
 /**
  * Single-Producer-Single-Consumer Queue mmap file backed
  */
-template <typename T> class SpscQueueMMap {
-public:
+template <typename T>
+class SpscQueueMMap {
+ public:
   SpscQueue() {}
 
   ~SpscQueue() {
@@ -28,7 +29,7 @@ public:
     close(fd_);
   }
 
-public:
+ public:
   void Init(const std::string &file_path, const size_t file_size,
             const bool reset) noexcept {
     LOG(INFO) << "Initializing spsc_queue at path: " << file_path;
@@ -42,8 +43,7 @@ public:
     fd_ = open(file_path.c_str(), O_RDWR | O_CREAT, 0666);
 
     CHECK(fd_ != -1) << "Error opening file";
-    if (reset)
-      CHECK(ftruncate(fd_, file_size) != -1) << "Error resizing file";
+    if (reset) CHECK(ftruncate(fd_, file_size) != -1) << "Error resizing file";
 
     mmap_ptr_ = static_cast<char *>(
         mmap(nullptr, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
@@ -77,7 +77,7 @@ public:
     // TODO: implement
   }
 
-private:
+ private:
   bool PushImpl(auto &&value) {
     auto head = head_idx_->load(std::memory_order_acquire);
     auto tail = tail_idx_->load(std::memory_order_acquire);
@@ -93,11 +93,11 @@ private:
     return true;
   }
 
-private:
+ private:
   static constexpr size_t CACHE_LINE = 64;
   static constexpr size_t HEADER_SIZE = 2 * CACHE_LINE;
 
-private:
+ private:
   int fd_;
   size_t file_size_;
   char *mmap_ptr_;
@@ -109,4 +109,4 @@ private:
   std::atomic<int> *tail_idx_;
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

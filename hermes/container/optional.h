@@ -10,10 +10,12 @@ struct NullOptional {};
 
 constexpr NullOptional nullopt{};
 
-template <typename T> class Optional {
-  template <typename U> friend class Optional;
+template <typename T>
+class Optional {
+  template <typename U>
+  friend class Optional;
 
-public:
+ public:
   Optional() noexcept {}
   Optional(NullOptional) {}
 
@@ -115,7 +117,7 @@ public:
     return opt.HasValue();
   }
 
-public:
+ public:
   constexpr T &Value() &noexcept { return *reinterpret_cast<T *>(data_); }
 
   constexpr const T &Value() const &noexcept {
@@ -135,9 +137,9 @@ public:
     has_value_ = false;
   }
 
-private:
+ private:
   bool has_value_{false};
   char data_[sizeof(T)];
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

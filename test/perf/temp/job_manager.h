@@ -1,12 +1,13 @@
-#include <cstdio>
-#include <cstring>
 #include <fcntl.h>
-#include <iostream>
-#include <optional>
-#include <sstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include <cstdio>
+#include <cstring>
+#include <iostream>
+#include <optional>
+#include <sstream>
 #include <unordered_map>
 #include <vector>
 
@@ -55,8 +56,9 @@ struct JobChain {
   }
 };
 
-template <int MAX_BUFFER_SIZE = 1 << 13, char DELIMITER = ','> class CsvReader {
-public:
+template <int MAX_BUFFER_SIZE = 1 << 13, char DELIMITER = ','>
+class CsvReader {
+ public:
   CsvReader() {
     buffer_ = new char[MAX_BUFFER_SIZE + 1];
     buffer_[MAX_BUFFER_SIZE] = '\0';
@@ -64,7 +66,7 @@ public:
 
   ~CsvReader() { delete[] buffer_; }
 
-public:
+ public:
   bool Init(std::FILE *stream) {
     stream_ = stream;
     ReadToBuffer();
@@ -90,12 +92,12 @@ public:
 
   inline bool IsGood() const noexcept { return is_good_; }
 
-public:
+ public:
   static inline bool IsDigit(char c) noexcept {
     return static_cast<unsigned char>(c - '0') < 10;
   }
 
-private:
+ private:
   inline int NextInt() noexcept {
     auto ret = 0;
 
@@ -126,7 +128,7 @@ private:
     is_good_ = (begin_ != end_);
   }
 
-private:
+ private:
   bool is_good_{false};
   char *begin_{nullptr}, *end_{nullptr};
   char *buffer_{nullptr};
@@ -135,10 +137,10 @@ private:
 };
 
 class JobManager {
-public:
+ public:
   JobManager() {}
 
-public:
+ public:
   bool Init(std::FILE *stream) { return init_succeed_ = InitImpl(stream); }
 
   // print to STDOUT
@@ -156,10 +158,9 @@ public:
     }
   }
 
-private:
+ private:
   bool InitImpl(std::FILE *stream) {
-    if (!input_.Init(stream))
-      return false;
+    if (!input_.Init(stream)) return false;
 
     while (input_.IsGood()) {
       const auto job = input_.ReadOne();
@@ -176,8 +177,7 @@ private:
     for (auto &p : job_mp_) {
       auto &job = p.second;
 
-      if (!job.next_id)
-        continue;
+      if (!job.next_id) continue;
 
       if (!job_mp_.count(job.next_id)) {
         // std::cerr << "Next job ID not exists " << job.next_id;
@@ -196,8 +196,7 @@ private:
 
     for (auto &p : job_mp_) {
       auto &curr_job = p.second;
-      if (curr_job.next_id || curr_job.visited)
-        continue;
+      if (curr_job.next_id || curr_job.visited) continue;
 
       // root job
       auto chain = JobChain{};
@@ -229,7 +228,7 @@ private:
     return true;
   }
 
-private:
+ private:
   bool init_succeed_{true};
   std::unordered_map<int, Job> job_mp_;
   std::vector<JobChain> job_chain_list_;

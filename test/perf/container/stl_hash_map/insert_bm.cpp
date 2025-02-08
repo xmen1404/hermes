@@ -1,8 +1,8 @@
 #include <benchmark/benchmark.h>
 
-#include "hermes/container/stl_hash_map.h"
-
 #include <memory>
+
+#include "hermes/container/stl_hash_map.h"
 
 namespace bm = benchmark;
 
@@ -12,8 +12,7 @@ static void hermesHashMapIntBM(bm::State &state) {
     hermes::container::HashMap<int, int> mp;
     mp.Init();
 
-    for (auto i = 0; i < size; ++i)
-      mp.Insert({i, i});
+    for (auto i = 0; i < size; ++i) mp.Insert({i, i});
 
     bm::DoNotOptimize(mp);
   }
@@ -25,8 +24,7 @@ static void stlHashMapIntBM(bm::State &state) {
   for (auto _ : state) {
     std::unordered_map<int, int> mp;
 
-    for (auto i = 0; i < size; ++i)
-      mp.insert({i, i});
+    for (auto i = 0; i < size; ++i) mp.insert({i, i});
 
     bm::DoNotOptimize(mp);
   }
@@ -48,8 +46,7 @@ static void hermesHashMapBigStructBM(bm::State &state) {
     hermes::container::HashMap<int, BigStruct> mp;
     mp.Init();
 
-    for (auto i = 0; i < size; ++i)
-      mp.Insert({i, BigStruct{}});
+    for (auto i = 0; i < size; ++i) mp.Insert({i, BigStruct{}});
 
     bm::DoNotOptimize(mp);
   }
@@ -61,8 +58,7 @@ static void stlHashMapBigStructBM(bm::State &state) {
   for (auto _ : state) {
     std::unordered_map<int, BigStruct> mp;
 
-    for (auto i = 0; i < size; ++i)
-      mp.insert({i, BigStruct{}});
+    for (auto i = 0; i < size; ++i) mp.insert({i, BigStruct{}});
 
     bm::DoNotOptimize(mp);
   }

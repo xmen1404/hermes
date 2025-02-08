@@ -24,12 +24,12 @@
 #ifndef __ZMQ_ADDON_HPP_INCLUDED__
 #define __ZMQ_ADDON_HPP_INCLUDED__
 
-#include "zmq.hpp"
-
 #include <deque>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
+
+#include "zmq.hpp"
 #ifdef ZMQ_CPP11
 #include <functional>
 #include <limits>
@@ -38,7 +38,7 @@
 namespace zmq {
 // socket ref or native file descriptor for poller
 class poller_ref_t {
-public:
+ public:
   enum RefType { RT_SOCKET, RT_FD };
 
   poller_ref_t() : poller_ref_t(socket_ref{}) {}
@@ -59,7 +59,7 @@ public:
     return data == o.data;
   }
 
-private:
+ private:
   template <class T>
   static void hash_combine(std::size_t &seed, const T &v) ZMQ_NOTHROW {
     std::hash<T> hasher;
@@ -68,17 +68,18 @@ private:
 
   std::tuple<int, zmq::socket_ref, zmq::fd_t> data;
 
-}; // class poller_ref_t
+};  // class poller_ref_t
 
-} // namespace zmq
+}  // namespace zmq
 
 // std::hash<> specialization for std::unordered_map
-template <> struct std::hash<zmq::poller_ref_t> {
+template <>
+struct std::hash<zmq::poller_ref_t> {
   size_t operator()(const zmq::poller_ref_t &ref) const ZMQ_NOTHROW {
     return ref.hash();
   }
 };
-#endif //  ZMQ_CPP11
+#endif  //  ZMQ_CPP11
 
 namespace zmq {
 #ifdef ZMQ_CPP11
@@ -102,8 +103,7 @@ recv_result_t recv_multipart_n(socket_ref s, OutputIt out, size_t n,
     ++msg_count;
     const bool more = msg.more();
     *out++ = std::move(msg);
-    if (!more)
-      break;
+    if (!more) break;
   }
   return msg_count;
 }
@@ -137,7 +137,7 @@ inline uint32_t read_u32_network_order(const unsigned char *buf) {
     return value;
   }
 }
-} // namespace detail
+}  // namespace detail
 
 /*  Receive a multipart message.
 
@@ -342,10 +342,10 @@ OutputIt decode(const message_t &encoded, OutputIt out) {
     add/remove parts.
 */
 class multipart_t {
-private:
+ private:
   std::deque<message_t> m_parts;
 
-public:
+ public:
   typedef std::deque<message_t>::value_type value_type;
 
   typedef std::deque<message_t>::iterator iterator;
@@ -427,11 +427,9 @@ public:
     while (more) {
       message_t message;
 #ifdef ZMQ_CPP11
-      if (!socket.recv(message, static_cast<recv_flags>(flags)))
-        return false;
+      if (!socket.recv(message, static_cast<recv_flags>(flags))) return false;
 #else
-      if (!socket.recv(&message, flags))
-        return false;
+      if (!socket.recv(&message, flags)) return false;
 #endif
       more = message.more();
       add(std::move(message));
@@ -451,8 +449,7 @@ public:
                                     (more ? ZMQ_SNDMORE : 0) | flags)))
         return false;
 #else
-      if (!socket.send(message, (more ? ZMQ_SNDMORE : 0) | flags))
-        return false;
+      if (!socket.send(message, (more ? ZMQ_SNDMORE : 0) | flags)) return false;
 #endif
     }
     clear();
@@ -461,14 +458,12 @@ public:
 
   // Concatenate other multipart to front
   void prepend(multipart_t &&other) {
-    while (!other.empty())
-      push(other.remove());
+    while (!other.empty()) push(other.remove());
   }
 
   // Concatenate other multipart to back
   void append(multipart_t &&other) {
-    while (!other.empty())
-      add(other.pop());
+    while (!other.empty()) add(other.pop());
   }
 
   // Push memory block to front
@@ -492,14 +487,16 @@ public:
   }
 
   // Push type (fixed-size) to front
-  template <typename T> void pushtyp(const T &type) {
+  template <typename T>
+  void pushtyp(const T &type) {
     static_assert(!std::is_same<T, std::string>::value,
                   "Use pushstr() instead of pushtyp<std::string>()");
     m_parts.push_front(message_t(&type, sizeof(type)));
   }
 
   // Push type (fixed-size) to back
-  template <typename T> void addtyp(const T &type) {
+  template <typename T>
+  void addtyp(const T &type) {
     static_assert(!std::is_same<T, std::string>::value,
                   "Use addstr() instead of addtyp<std::string>()");
     m_parts.push_back(message_t(&type, sizeof(type)));
@@ -522,7 +519,8 @@ public:
   }
 
   // Pop type (fixed-size) from front
-  template <typename T> T poptyp() {
+  template <typename T>
+  T poptyp() {
     static_assert(!std::is_same<T, std::string>::value,
                   "Use popstr() instead of poptyp<std::string>()");
     if (sizeof(T) != m_parts.front().size())
@@ -563,7 +561,8 @@ public:
   }
 
   // Peek type (fixed-size) from front
-  template <typename T> T peektyp(size_t index) const {
+  template <typename T>
+  T peektyp(size_t index) const {
     static_assert(!std::is_same<T, std::string>::value,
                   "Use peekstr() instead of peektyp<std::string>()");
     if (sizeof(T) != m_parts[index].size())
@@ -574,7 +573,8 @@ public:
   }
 
   // Create multipart from type (fixed-size)
-  template <typename T> static multipart_t create(const T &type) {
+  template <typename T>
+  static multipart_t create(const T &type) {
     multipart_t multipart;
     multipart.addtyp(type);
     return multipart;
@@ -626,11 +626,9 @@ public:
   }
 
   bool operator==(const multipart_t &other) const ZMQ_NOTHROW {
-    if (size() != other.size())
-      return false;
+    if (size() != other.size()) return false;
     for (size_t i = 0; i < size(); i++)
-      if (at(i) != other.at(i))
-        return false;
+      if (at(i) != other.at(i)) return false;
     return true;
   }
 
@@ -657,22 +655,22 @@ public:
 
 #endif
 
-private:
+ private:
   // Disable implicit copying (moving is more efficient)
   multipart_t(const multipart_t &other) ZMQ_DELETED_FUNCTION;
   void operator=(const multipart_t &other) ZMQ_DELETED_FUNCTION;
-}; // class multipart_t
+};  // class multipart_t
 
 inline std::ostream &operator<<(std::ostream &os, const multipart_t &msg) {
   return os << msg.str();
 }
 
-#endif // ZMQ_HAS_RVALUE_REFS
+#endif  // ZMQ_HAS_RVALUE_REFS
 
-#if defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&                      \
+#if defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) && \
     defined(ZMQ_HAVE_POLLER)
 class active_poller_t {
-public:
+ public:
   active_poller_t() = default;
   ~active_poller_t() = default;
 
@@ -692,8 +690,7 @@ public:
           "null handler in active_poller_t::add (socket)");
     auto ret = handlers.emplace(
         ref, std::make_shared<handler_type>(std::move(handler)));
-    if (!ret.second)
-      throw error_t(EINVAL); // already added
+    if (!ret.second) throw error_t(EINVAL);  // already added
     try {
       base_poller.add(socket, events, ret.first->second.get());
       need_rebuild = true;
@@ -711,8 +708,7 @@ public:
       throw std::invalid_argument("null handler in active_poller_t::add (fd)");
     auto ret = handlers.emplace(
         ref, std::make_shared<handler_type>(std::move(handler)));
-    if (!ret.second)
-      throw error_t(EINVAL); // already added
+    if (!ret.second) throw error_t(EINVAL);  // already added
     try {
       base_poller.add(fd, events, ret.first->second.get());
       need_rebuild = true;
@@ -765,7 +761,7 @@ public:
 
   size_t size() const noexcept { return handlers.size(); }
 
-private:
+ private:
   bool need_rebuild{false};
 
   poller_t<handler_type> base_poller{};
@@ -775,10 +771,10 @@ private:
 
   std::vector<decltype(base_poller)::event_type> poller_events{};
   std::vector<std::shared_ptr<handler_type>> poller_handlers{};
-};     // class active_poller_t
-#endif //  defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&
-       //  defined(ZMQ_HAVE_POLLER)
+};      // class active_poller_t
+#endif  //  defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&
+        //  defined(ZMQ_HAVE_POLLER)
 
-} // namespace zmq
+}  // namespace zmq
 
-#endif // __ZMQ_ADDON_HPP_INCLUDED__
+#endif  // __ZMQ_ADDON_HPP_INCLUDED__

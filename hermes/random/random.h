@@ -6,7 +6,7 @@
 namespace hermes::random {
 
 class IntegralRandom {
-public:
+ public:
   static bool RandBool() noexcept {
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -24,4 +24,4 @@ public:
   }
 };
 
-} // namespace hermes::random
+}  // namespace hermes::random

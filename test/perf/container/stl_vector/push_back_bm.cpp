@@ -9,8 +9,7 @@ static void hermesVectorIntBM(bm::State &state) {
   for (auto _ : state) {
     hermes::container::Vector<int> vi;
 
-    for (auto i = 0; i < size; ++i)
-      vi.PushBack(i);
+    for (auto i = 0; i < size; ++i) vi.PushBack(i);
 
     bm::DoNotOptimize(vi);
   }
@@ -22,8 +21,7 @@ static void stlVectorIntBM(bm::State &state) {
   for (auto _ : state) {
     std::vector<int> vi;
 
-    for (auto i = 0; i < size; ++i)
-      vi.push_back(i);
+    for (auto i = 0; i < size; ++i) vi.push_back(i);
 
     bm::DoNotOptimize(vi);
   }
@@ -43,8 +41,7 @@ static void hermesVectorStructBM(bm::State &state) {
   for (auto _ : state) {
     hermes::container::Vector<BigStruct> vi;
 
-    for (auto i = 0; i < size; ++i)
-      vi.PushBack(BigStruct{});
+    for (auto i = 0; i < size; ++i) vi.PushBack(BigStruct{});
 
     bm::DoNotOptimize(vi);
   }
@@ -56,8 +53,7 @@ static void stlVectorStructBM(bm::State &state) {
   for (auto _ : state) {
     std::vector<BigStruct> vi;
 
-    for (auto i = 0; i < size; ++i)
-      vi.push_back(BigStruct{});
+    for (auto i = 0; i < size; ++i) vi.push_back(BigStruct{});
 
     bm::DoNotOptimize(vi);
   }

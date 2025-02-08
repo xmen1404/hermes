@@ -10,14 +10,12 @@ static void hermesHashMapIntBM(bm::State &state) {
   hermes::container::HashMap<int, int> mp;
   mp.Init();
 
-  for (auto i = 0; i < size; ++i)
-    mp.Insert({i, i});
+  for (auto i = 0; i < size; ++i) mp.Insert({i, i});
 
   for (auto _ : state) {
     auto id = hermes::random::IntegralRandom::RandT<int>(0, size - 1);
     auto it = mp.Find(id);
-    if (it != mp.End())
-      mp.Erase(it);
+    if (it != mp.End()) mp.Erase(it);
   }
 }
 
@@ -32,8 +30,7 @@ static void stlHashMapIntBM(bm::State &state) {
   for (auto _ : state) {
     auto id = hermes::random::IntegralRandom::RandT<int>(0, size - 1);
     auto it = mp.find(id);
-    if (it != mp.end())
-      mp.erase(it);
+    if (it != mp.end()) mp.erase(it);
   }
 }
 

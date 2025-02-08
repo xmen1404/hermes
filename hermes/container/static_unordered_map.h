@@ -21,4 +21,4 @@ class
       private:
 };
 
-}; // namespace hermes::container
+};  // namespace hermes::container

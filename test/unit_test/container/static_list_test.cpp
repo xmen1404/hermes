@@ -1,7 +1,8 @@
+#include "hermes/container/static_list.h"
+
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
-#include "hermes/container/static_list.h"
 #include "hermes/random/random.h"
 
 using namespace hermes::container;
@@ -34,7 +35,7 @@ TEST_CASE("PushBack Delete Test") {
 }
 
 TEST_CASE("Big Data Size Test") {
-  constexpr int OBJECT_SIZE = 1 << 12; // cacheline size
+  constexpr int OBJECT_SIZE = 1 << 12;  // cacheline size
   constexpr int DATA_SIZE = 1024;
 
   struct Data {
@@ -42,8 +43,7 @@ TEST_CASE("Big Data Size Test") {
   };
 
   StaticList<Data, DATA_SIZE> list{};
-  for (auto i = 0; i < DATA_SIZE; ++i)
-    list.PushBack(Data{});
+  for (auto i = 0; i < DATA_SIZE; ++i) list.PushBack(Data{});
 
   REQUIRE(list.Size() == 1024);
 }
@@ -65,8 +65,7 @@ TEST_CASE("Random Insert Test") {
 
     auto it = list.Begin();
 
-    for (auto step = 0; step < idx; ++step)
-      it = std::next(it);
+    for (auto step = 0; step < idx; ++step) it = std::next(it);
     list.Insert(it, val);
   }
 
@@ -80,8 +79,7 @@ TEST_CASE("Random Insert Test") {
     const auto idx = p.first;
 
     auto it = output.begin();
-    for (auto step = 0; step < idx; ++step)
-      it = std::next(it);
+    for (auto step = 0; step < idx; ++step) it = std::next(it);
     output.insert(it, val);
   }
 

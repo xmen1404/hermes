@@ -7,11 +7,11 @@
 namespace hermes::network {
 
 class ReqSocket : public Socket {
-public:
+ public:
   ReqSocket() : Socket(1, zmq::socket_type::req) {}
 
-public:
+ public:
   void Init(const hermes::config::Config &config) noexcept override {}
 };
 
-} // namespace hermes::network
+}  // namespace hermes::network

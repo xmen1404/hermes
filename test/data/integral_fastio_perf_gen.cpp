@@ -5,7 +5,6 @@
 #include "hermes/random/random.h"
 
 signed main() {
-
   const std::string FILENAME = "integral_fastio_perf.input";
   const int test_size = 1e8;
 

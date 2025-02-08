@@ -6,8 +6,9 @@
 
 namespace hermes::container {
 
-template <typename T> class Vector {
-public:
+template <typename T>
+class Vector {
+ public:
   Vector() noexcept : max_size_{0}, size_{0}, data_{nullptr} {}
 
   template <typename std::enable_if<std::is_copy_constructible<T>::value,
@@ -33,19 +34,17 @@ public:
   }
 
   ~Vector() noexcept {
-    while (!IsEmpty())
-      PopBack();
+    while (!IsEmpty()) PopBack();
 
     if (data_ != nullptr) [[likely]]
       operator delete[](data_);
   }
 
-public:
+ public:
   typename std::enable_if<std::is_copy_constructible<T>::value,
                           Vector<T> &>::type
   operator=(const Vector<T> &rhs) {
-    for (auto i = 0; i < size_; ++i)
-      (data_ + i)->~T();
+    for (auto i = 0; i < size_; ++i) (data_ + i)->~T();
 
     if (max_size_ < rhs.size_) {
       operator delete[](data_);
@@ -63,8 +62,7 @@ public:
   typename std::enable_if<std::is_move_constructible<T>::value,
                           Vector<T> &>::type
   operator=(Vector<T> &&rhs) {
-    for (auto i = 0; i < size_; ++i)
-      (data_ + i)->~T();
+    for (auto i = 0; i < size_; ++i) (data_ + i)->~T();
 
     operator delete[](data_);
     data_ = rhs.data_;
@@ -74,7 +72,7 @@ public:
     rhs.data_ = nullptr;
   }
 
-public:
+ public:
   typename std::enable_if<std::is_copy_constructible<T>::value, void>::type
   PushBack(const T &item) {
     InnerPushBack(std::forward<const T>(item));
@@ -117,7 +115,7 @@ public:
 
   inline const T *Data() const noexcept { return data_; }
 
-private:
+ private:
   void InnerPushBack(auto &&value) {
     if (size_ == max_size_) [[unlikely]] {
       Resize();
@@ -151,10 +149,10 @@ private:
     max_size_ = new_max_size;
   }
 
-private:
+ private:
   size_t max_size_;
   size_t size_;
   T *data_;
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

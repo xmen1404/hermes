@@ -12,8 +12,9 @@ namespace hermes::container {
  *
  * @tparam T The type of the managed object.
  */
-template <typename T> class UniquePtr {
-public:
+template <typename T>
+class UniquePtr {
+ public:
   /**
    * @brief Constructs a UniquePtr that takes ownership of the given pointer.
    *
@@ -49,7 +50,7 @@ public:
     return *this;
   }
 
-public:
+ public:
   /**
    * @brief Returns the raw pointer to the managed object.
    *
@@ -65,7 +66,7 @@ public:
    */
   explicit operator bool() const noexcept { return data_ != nullptr; }
 
-private:
+ private:
   T *data_;
 };
 
@@ -89,21 +90,23 @@ inline UniquePtr<T> MakeUnique(Args &&...params) {
  * @brief Control block for SharedPtr, managing reference counts.
  */
 struct SpControlBlock {
-  std::atomic<size_t> ref_cnt;      ///< Shared pointer count.
-  std::atomic<size_t> weak_ref_cnt; ///< Weak pointer count.
+  std::atomic<size_t> ref_cnt;       ///< Shared pointer count.
+  std::atomic<size_t> weak_ref_cnt;  ///< Weak pointer count.
 
   SpControlBlock() = delete;
   SpControlBlock(bool is_weak) : ref_cnt(!is_weak), weak_ref_cnt(is_weak) {}
 };
 
-template <typename T> class WeakPtr;
+template <typename T>
+class WeakPtr;
 
 /**
  * @brief A simple shared pointer implementation.
  * @tparam T The type of the managed object.
  */
-template <typename T> class SharedPtr {
-public:
+template <typename T>
+class SharedPtr {
+ public:
   /// Default constructor: creates an empty SharedPtr.
   SharedPtr() {}
 
@@ -134,11 +137,10 @@ public:
   /// Destructor: releases ownership.
   ~SharedPtr() { Reset(); }
 
-public:
+ public:
   /// Releases ownership. Deletes the managed object if this was the last owner.
   void Reset() {
-    if (!ctrl_ptr_)
-      return;
+    if (!ctrl_ptr_) return;
     auto prev_cnt = ctrl_ptr_->ref_cnt.fetch_add(-1, std::memory_order_acq_rel);
     if (prev_cnt == 1) {
       delete data_ptr_;
@@ -165,11 +167,11 @@ public:
            ctrl_ptr_->ref_cnt.load(std::memory_order_relaxed) == 1;
   }
 
-private:
-  SpControlBlock *ctrl_ptr_{nullptr}; ///< Pointer to the control block.
-  T *data_ptr_{nullptr};              ///< Pointer to the managed object.
+ private:
+  SpControlBlock *ctrl_ptr_{nullptr};  ///< Pointer to the control block.
+  T *data_ptr_{nullptr};               ///< Pointer to the managed object.
 
-private:
+ private:
   friend class WeakPtr<T>;
 };
 
@@ -184,8 +186,9 @@ inline static SharedPtr<T> MakeShared(Args &&...params) {
  *
  * @tparam T Type of the object.
  */
-template <typename T> class WeakPtr {
-public:
+template <typename T>
+class WeakPtr {
+ public:
   /// Default constructor.
   constexpr WeakPtr() noexcept {}
 
@@ -234,8 +237,7 @@ public:
    * Increments the strong count if object exists; else returns empty SharedPtr.
    */
   SharedPtr<T> Lock() {
-    if (ctrl_ptr_ == nullptr)
-      return {};
+    if (ctrl_ptr_ == nullptr) return {};
 
     auto prev_cnt = ctrl_ptr_->ref_cnt.fetch_add(1, std::memory_order_acquire);
     if (prev_cnt == 0) {
@@ -251,8 +253,7 @@ public:
    * Decrements weak count and deletes the control block if needed.
    */
   void Reset() {
-    if (ctrl_ptr_ == nullptr)
-      return;
+    if (ctrl_ptr_ == nullptr) return;
     auto prev_cnt =
         ctrl_ptr_->weak_ref_cnt.fetch_add(-1, std::memory_order_acq_rel);
     if (prev_cnt == 1 && !ctrl_ptr_->ref_cnt.load(std::memory_order_acquire))
@@ -261,9 +262,9 @@ public:
     data_ptr_ = nullptr;
   }
 
-private:
-  SpControlBlock *ctrl_ptr_{nullptr}; ///< Pointer to the control block.
-  T *data_ptr_{nullptr};              ///< Pointer to the managed object.
+ private:
+  SpControlBlock *ctrl_ptr_{nullptr};  ///< Pointer to the control block.
+  T *data_ptr_{nullptr};               ///< Pointer to the managed object.
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

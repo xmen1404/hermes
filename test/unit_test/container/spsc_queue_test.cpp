@@ -1,8 +1,9 @@
+#include "hermes/container/spsc_queue.h"
+
 #include <catch2/catch_test_macros.hpp>
 #include <thread>
 #include <vector>
 
-#include "hermes/container/spsc_queue.h"
 #include "hermes/random/random.h"
 
 using namespace hermes::container;

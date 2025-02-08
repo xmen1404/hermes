@@ -1,22 +1,22 @@
 #pragma once
 
-#include <cstdio>
-#include <cstring>
 #include <fcntl.h>
+#include <glog/logging.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <type_traits>
 #include <unistd.h>
 
-#include <glog/logging.h>
+#include <cstdio>
+#include <cstring>
+#include <type_traits>
 
 namespace hermes::io {
 
 template <typename T, int MAX_BUFFER_SIZE = 1 << 13,
           typename = std::enable_if_t<std::is_integral<T>::value>>
 class IntegralFastIO {
-public:
+ public:
   void Init(const char *path) { Init(open(path, O_RDONLY)); }
 
   void Init(const int fd) noexcept {
@@ -53,12 +53,12 @@ public:
     return ret;
   }
 
-public:
+ public:
   static inline bool IsDigit(char c) noexcept {
     return static_cast<unsigned char>(c - '0') < 10;
   }
 
-private:
+ private:
   inline char NextChar() {
     if (begin_ >= end_) [[unlikely]]
       ReadToBuffer();
@@ -86,7 +86,7 @@ private:
     is_good_ = begin_ != end_;
   }
 
-private:
+ private:
   bool is_good_{false};
   int begin_{0}, end_{0};
 
@@ -98,4 +98,4 @@ private:
   int fd_{-1};
 };
 
-} // namespace hermes::io
+}  // namespace hermes::io

@@ -1,6 +1,6 @@
-#include <catch2/catch_test_macros.hpp>
-
 #include "hermes/container/stl_vector.h"
+
+#include <catch2/catch_test_macros.hpp>
 
 using namespace hermes::container;
 
@@ -23,8 +23,7 @@ TEST_CASE("PushBack PopBack Test") {
     REQUIRE(vi[i] == data[i]);
   }
 
-  for (int i = 0; i < n - 1; ++i)
-    vi.PopBack();
+  for (int i = 0; i < n - 1; ++i) vi.PopBack();
 
   REQUIRE(vi.Back() == data[0]);
 }

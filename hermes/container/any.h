@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glog/logging.h>
+
 #include <type_traits>
 #include <typeinfo>
 #include <utility>
@@ -8,7 +9,7 @@
 namespace hermes::container {
 
 class Any {
-public:
+ public:
   constexpr Any() noexcept
       : data_{nullptr}, Type_{nullptr}, Clone_{nullptr}, Delete_{nullptr} {}
 
@@ -24,7 +25,7 @@ public:
 
   ~Any() noexcept { Reset(); }
 
-public:
+ public:
   Any &operator=(const Any &rhs) {
     if (this != &rhs) {
       Reset();
@@ -49,10 +50,14 @@ public:
     return *this;
   }
 
-public:
-  template <typename T> T Get() const & { return T{*static_cast<T *>(data_)}; }
+ public:
+  template <typename T>
+  T Get() const & {
+    return T{*static_cast<T *>(data_)};
+  }
 
-  template <typename T> T Get() && {
+  template <typename T>
+  T Get() && {
     auto ptr = data_;
     data_ = nullptr;
     return T{std::move(*static_cast<T *>(ptr))};
@@ -69,9 +74,10 @@ public:
     }
   }
 
-private:
+ private:
   // Helper to set up type-specific function pointers and allocate storage.
-  template <typename T> void AssignValue(T &&value) {
+  template <typename T>
+  void AssignValue(T &&value) {
     using DecayedT = std::decay_t<T>;
     Type_ = []() -> const std::type_info & { return typeid(DecayedT); };
     Clone_ = [](void *data) -> void * {
@@ -102,19 +108,21 @@ private:
     }
   }
 
-private:
+ private:
   void *data_{nullptr};
   const std::type_info &(*Type_)();
   void *(*Clone_)(void *);
   void (*Delete_)(void *);
 };
 
-template <typename T> inline static T AnyCast(const Any &any) {
+template <typename T>
+inline static T AnyCast(const Any &any) {
   return any.Get<T>();
 }
 
-template <typename T> inline static T AnyCast(Any &&any) {
+template <typename T>
+inline static T AnyCast(Any &&any) {
   return std::move(any).Get<T>();
 }
 
-} // namespace hermes::container
+}  // namespace hermes::container

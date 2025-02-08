@@ -7,7 +7,7 @@ namespace hermes::container {
 
 // TODO: finish the implementation
 class String {
-public:
+ public:
   String() : size_{0}, max_size_{0}, data_{nullptr} {}
 
   String(const String &rhs) {
@@ -27,8 +27,7 @@ public:
   String(const char *s) {
     size_ = strlen(s);
     max_size_ = 1;
-    while (max_size_ < size_ + 1)
-      max_size_ <<= 1;
+    while (max_size_ < size_ + 1) max_size_ <<= 1;
     data_ = new char[max_size_];
     std::memcpy(data_, s, size_);
   }
@@ -36,15 +35,14 @@ public:
   String(const char *s, const size_t size) {
     size_ = size;
     max_size_ = 1;
-    while (max_size_ < size_ + 1)
-      max_size_ <<= 1;
+    while (max_size_ < size_ + 1) max_size_ <<= 1;
     data_ = new char[max_size_];
     std::memcpy(data_, s, size_);
   }
 
   ~String() { delete[] data_; }
 
-public:
+ public:
   size_t Size() const { return size_; }
 
   size_t MaxSize() const { return max_size_; }
@@ -73,7 +71,7 @@ public:
     return data_[idx];
   }
 
-private:
+ private:
   void Resize() {
     max_size_ = max_size_ ? (max_size_ << 1) : 1;
     auto *new_data = new char[max_size_];
@@ -82,10 +80,10 @@ private:
     data_ = new_data;
   }
 
-public:
+ public:
   size_t size_;
   size_t max_size_;
   char *data_;
 };
 
-} // namespace hermes::container
+}  // namespace hermes::container

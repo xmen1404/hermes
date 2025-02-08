@@ -94,8 +94,8 @@
 #define ZMQ_CONSTEXPR_VAR const
 #define ZMQ_CPP11_DEPRECATED(msg)
 #endif
-#if defined(ZMQ_CPP14) && (!defined(_MSC_VER) || _MSC_VER > 1900) &&           \
-    (!defined(__GNUC__) || __GNUC__ > 5 ||                                     \
+#if defined(ZMQ_CPP14) && (!defined(_MSC_VER) || _MSC_VER > 1900) && \
+    (!defined(__GNUC__) || __GNUC__ > 5 ||                           \
      (__GNUC__ == 5 && __GNUC_MINOR__ > 3))
 #define ZMQ_EXTENDED_CONSTEXPR
 #endif
@@ -107,10 +107,9 @@
 #define ZMQ_CONSTEXPR_IF
 #endif
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
-
-#include <algorithm>
 #include <exception>
 #include <iomanip>
 #include <sstream>
@@ -153,13 +152,13 @@
 #define CPPZMQ_VERSION_MINOR 10
 #define CPPZMQ_VERSION_PATCH 0
 
-#define CPPZMQ_VERSION                                                         \
-  ZMQ_MAKE_VERSION(CPPZMQ_VERSION_MAJOR, CPPZMQ_VERSION_MINOR,                 \
+#define CPPZMQ_VERSION                                         \
+  ZMQ_MAKE_VERSION(CPPZMQ_VERSION_MAJOR, CPPZMQ_VERSION_MINOR, \
                    CPPZMQ_VERSION_PATCH)
 
 //  Detect whether the compiler supports C++11 rvalue references.
-#if (defined(__GNUC__) &&                                                      \
-     (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) &&                \
+#if (defined(__GNUC__) &&                                       \
+     (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 2)) && \
      defined(__GXX_EXPERIMENTAL_CXX0X__))
 #define ZMQ_HAS_RVALUE_REFS
 #define ZMQ_DELETED_FUNCTION = delete
@@ -183,7 +182,7 @@
 #define ZMQ_DELETED_FUNCTION
 #endif
 
-#if defined(ZMQ_CPP11) && !defined(__llvm__) && !defined(__INTEL_COMPILER) &&  \
+#if defined(ZMQ_CPP11) && !defined(__llvm__) && !defined(__INTEL_COMPILER) && \
     defined(__GNUC__) && __GNUC__ < 5
 #define ZMQ_CPP11_PARTIAL
 #elif defined(__GLIBCXX__) && __GLIBCXX__ < 20160805
@@ -210,8 +209,8 @@
 #define ZMQ_HAS_PROXY_STEERABLE
 /*  Socket event data  */
 typedef struct {
-  uint16_t event; // id of the event as bitfield
-  int32_t value;  // value is either error code, fd or reconnect interval
+  uint16_t event;  // id of the event as bitfield
+  int32_t value;   // value is either error code, fd or reconnect interval
 } zmq_event_t;
 #endif
 
@@ -234,15 +233,18 @@ namespace detail {
 namespace ranges {
 using std::begin;
 using std::end;
-template <class T> auto begin(T &&r) -> decltype(begin(std::forward<T>(r))) {
+template <class T>
+auto begin(T &&r) -> decltype(begin(std::forward<T>(r))) {
   return begin(std::forward<T>(r));
 }
-template <class T> auto end(T &&r) -> decltype(end(std::forward<T>(r))) {
+template <class T>
+auto end(T &&r) -> decltype(end(std::forward<T>(r))) {
   return end(std::forward<T>(r));
 }
-} // namespace ranges
+}  // namespace ranges
 
-template <class T> using void_t = void;
+template <class T>
+using void_t = void;
 
 template <class Iter>
 using iter_value_t = typename std::iterator_traits<Iter>::value_type;
@@ -251,9 +253,11 @@ template <class Range>
 using range_iter_t = decltype(ranges::begin(
     std::declval<typename std::remove_reference<Range>::type &>()));
 
-template <class Range> using range_value_t = iter_value_t<range_iter_t<Range>>;
+template <class Range>
+using range_value_t = iter_value_t<range_iter_t<Range>>;
 
-template <class T, class = void> struct is_range : std::false_type {};
+template <class T, class = void>
+struct is_range : std::false_type {};
 
 template <class T>
 struct is_range<
@@ -264,7 +268,7 @@ struct is_range<
                                 typename std::remove_reference<T>::type &>()))>>
     : std::true_type {};
 
-} // namespace detail
+}  // namespace detail
 #endif
 
 typedef zmq_free_fn free_fn;
@@ -282,7 +286,7 @@ typedef int fd_t;
 #endif
 
 class error_t : public std::exception {
-public:
+ public:
   error_t() ZMQ_NOTHROW : errnum(zmq_errno()) {}
   explicit error_t(int err) ZMQ_NOTHROW : errnum(err) {}
   virtual const char *what() const ZMQ_NOTHROW ZMQ_OVERRIDE {
@@ -290,18 +294,17 @@ public:
   }
   int num() const ZMQ_NOTHROW { return errnum; }
 
-private:
+ private:
   int errnum;
 };
 
 namespace detail {
 inline int poll(zmq_pollitem_t *items_, size_t nitems_, long timeout_) {
   int rc = zmq_poll(items_, static_cast<int>(nitems_), timeout_);
-  if (rc < 0)
-    throw error_t();
+  if (rc < 0) throw error_t();
   return rc;
 }
-} // namespace detail
+}  // namespace detail
 
 #ifdef ZMQ_CPP11
 ZMQ_DEPRECATED(
@@ -361,9 +364,9 @@ inline int poll(std::vector<zmq_pollitem_t> &items, long timeout_) {
 }
 
 template <std::size_t SIZE>
-inline int
-poll(std::array<zmq_pollitem_t, SIZE> &items,
-     std::chrono::milliseconds timeout = std::chrono::milliseconds{-1}) {
+inline int poll(std::array<zmq_pollitem_t, SIZE> &items,
+                std::chrono::milliseconds timeout = std::chrono::milliseconds{
+                    -1}) {
   return detail::poll(items.data(), items.size(),
                       static_cast<long>(timeout.count()));
 }
@@ -382,19 +385,20 @@ inline std::tuple<int, int, int> version() {
 
 #if !defined(ZMQ_CPP11_PARTIAL)
 namespace detail {
-template <class T> struct is_char_type {
+template <class T>
+struct is_char_type {
   // true if character type for string literals in C++11
   static constexpr bool value =
       std::is_same<T, char>::value || std::is_same<T, wchar_t>::value ||
       std::is_same<T, char16_t>::value || std::is_same<T, char32_t>::value;
 };
-} // namespace detail
+}  // namespace detail
 #endif
 
 #endif
 
 class message_t {
-public:
+ public:
   message_t() ZMQ_NOTHROW {
     int rc = zmq_msg_init(&msg);
     ZMQ_ASSERT(rc == 0);
@@ -402,26 +406,24 @@ public:
 
   explicit message_t(size_t size_) {
     int rc = zmq_msg_init_size(&msg, size_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
-  template <class ForwardIter> message_t(ForwardIter first, ForwardIter last) {
+  template <class ForwardIter>
+  message_t(ForwardIter first, ForwardIter last) {
     typedef typename std::iterator_traits<ForwardIter>::value_type value_t;
 
     assert(std::distance(first, last) >= 0);
     size_t const size_ =
         static_cast<size_t>(std::distance(first, last)) * sizeof(value_t);
     int const rc = zmq_msg_init_size(&msg, size_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     std::copy(first, last, data<value_t>());
   }
 
   message_t(const void *data_, size_t size_) {
     int rc = zmq_msg_init_size(&msg, size_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     if (size_) {
       // this constructor allows (nullptr, 0),
       // memcpy with a null pointer is UB
@@ -432,8 +434,7 @@ public:
   message_t(void *data_, size_t size_, free_fn *ffn_,
             void *hint_ = ZMQ_NULLPTR) {
     int rc = zmq_msg_init_data(&msg, data_, size_, ffn_, hint_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   // overload set of string-like types and generic containers
@@ -489,28 +490,23 @@ public:
 
   void rebuild() {
     int rc = zmq_msg_close(&msg);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     rc = zmq_msg_init(&msg);
     ZMQ_ASSERT(rc == 0);
   }
 
   void rebuild(size_t size_) {
     int rc = zmq_msg_close(&msg);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     rc = zmq_msg_init_size(&msg, size_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void rebuild(const void *data_, size_t size_) {
     int rc = zmq_msg_close(&msg);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     rc = zmq_msg_init_size(&msg, size_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     memcpy(data(), data_, size_);
   }
 
@@ -519,37 +515,31 @@ public:
   void rebuild(void *data_, size_t size_, free_fn *ffn_,
                void *hint_ = ZMQ_NULLPTR) {
     int rc = zmq_msg_close(&msg);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
     rc = zmq_msg_init_data(&msg, data_, size_, ffn_, hint_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   ZMQ_DEPRECATED("from 4.3.1, use move taking non-const reference instead")
   void move(message_t const *msg_) {
     int rc = zmq_msg_move(&msg, const_cast<zmq_msg_t *>(msg_->handle()));
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void move(message_t &msg_) {
     int rc = zmq_msg_move(&msg, msg_.handle());
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   ZMQ_DEPRECATED("from 4.3.1, use copy taking non-const reference instead")
   void copy(message_t const *msg_) {
     int rc = zmq_msg_copy(&msg, const_cast<zmq_msg_t *>(msg_->handle()));
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void copy(message_t &msg_) {
     int rc = zmq_msg_copy(&msg, msg_.handle());
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   bool more() const ZMQ_NOTHROW {
@@ -569,11 +559,13 @@ public:
 
   ZMQ_NODISCARD bool empty() const ZMQ_NOTHROW { return size() == 0u; }
 
-  template <typename T> T *data() ZMQ_NOTHROW {
+  template <typename T>
+  T *data() ZMQ_NOTHROW {
     return static_cast<T *>(data());
   }
 
-  template <typename T> T const *data() const ZMQ_NOTHROW {
+  template <typename T>
+  T const *data() const ZMQ_NOTHROW {
     return static_cast<T const *>(data());
   }
 
@@ -595,8 +587,7 @@ public:
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(3, 2, 0)
   int get(int property_) {
     int value = zmq_msg_get(&msg, property_);
-    if (value == -1)
-      throw error_t();
+    if (value == -1) throw error_t();
     return value;
   }
 #endif
@@ -604,8 +595,7 @@ public:
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 1, 0)
   const char *gets(const char *property_) {
     const char *value = zmq_msg_gets(&msg, property_);
-    if (value == ZMQ_NULLPTR)
-      throw error_t();
+    if (value == ZMQ_NULLPTR) throw error_t();
     return value;
   }
 #endif
@@ -617,8 +607,7 @@ public:
 
   void set_routing_id(uint32_t routing_id) {
     int rc = zmq_msg_set_routing_id(&msg, routing_id);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   const char *group() const {
@@ -627,8 +616,7 @@ public:
 
   void set_group(const char *group) {
     int rc = zmq_msg_set_group(&msg, group);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 #endif
 
@@ -668,8 +656,7 @@ public:
         byte = *msg_data++;
 
         is_ascii[1] = (byte >= 32 && byte < 127);
-        if (is_ascii[1] != is_ascii[0])
-          os << " "; // Separate text/non text
+        if (is_ascii[1] != is_ascii[0]) os << " ";  // Separate text/non text
 
         if (is_ascii[1]) {
           os << byte;
@@ -692,7 +679,7 @@ public:
   ZMQ_NODISCARD zmq_msg_t *handle() ZMQ_NOTHROW { return &msg; }
   ZMQ_NODISCARD const zmq_msg_t *handle() const ZMQ_NOTHROW { return &msg; }
 
-private:
+ private:
   //  The underlying message
   zmq_msg_t msg;
 
@@ -749,17 +736,15 @@ enum class ctxopt {
 #endif
 
 class context_t {
-public:
+ public:
   context_t() {
     ptr = zmq_ctx_new();
-    if (ptr == ZMQ_NULLPTR)
-      throw error_t();
+    if (ptr == ZMQ_NULLPTR) throw error_t();
   }
 
   explicit context_t(int io_threads_, int max_sockets_ = ZMQ_MAX_SOCKETS_DFLT) {
     ptr = zmq_ctx_new();
-    if (ptr == ZMQ_NULLPTR)
-      throw error_t();
+    if (ptr == ZMQ_NULLPTR) throw error_t();
 
     int rc = zmq_ctx_set(ptr, ZMQ_IO_THREADS, io_threads_);
     ZMQ_ASSERT(rc == 0);
@@ -794,8 +779,7 @@ public:
 #ifdef ZMQ_CPP11
   void set(ctxopt option, int optval) {
     int rc = zmq_ctx_set(ptr, static_cast<int>(option), optval);
-    if (rc == -1)
-      throw error_t();
+    if (rc == -1) throw error_t();
   }
 
   ZMQ_NODISCARD int get(ctxopt option) {
@@ -803,16 +787,14 @@ public:
     // some options have a default value of -1
     // which is unfortunate, and may result in errors
     // that don't make sense
-    if (rc == -1)
-      throw error_t();
+    if (rc == -1) throw error_t();
     return rc;
   }
 #endif
 
   // Terminates context (see also shutdown()).
   void close() ZMQ_NOTHROW {
-    if (ptr == ZMQ_NULLPTR)
-      return;
+    if (ptr == ZMQ_NULLPTR) return;
 
     int rc;
     do {
@@ -827,8 +809,7 @@ public:
   // Causes all blocking socket operations and any further
   // socket operations to return with ETERM.
   void shutdown() ZMQ_NOTHROW {
-    if (ptr == ZMQ_NULLPTR)
-      return;
+    if (ptr == ZMQ_NULLPTR) return;
     int rc = zmq_ctx_shutdown(ptr);
     ZMQ_ASSERT(rc == 0);
   }
@@ -847,7 +828,7 @@ public:
 
   void swap(context_t &other) ZMQ_NOTHROW { std::swap(ptr, other.ptr); }
 
-private:
+ private:
   void *ptr;
 
   context_t(const context_t &) ZMQ_DELETED_FUNCTION;
@@ -859,8 +840,8 @@ inline void swap(context_t &a, context_t &b) ZMQ_NOTHROW { a.swap(b); }
 #ifdef ZMQ_CPP11
 
 struct recv_buffer_size {
-  size_t size;             // number of bytes written to buffer
-  size_t untruncated_size; // untruncated message size in bytes
+  size_t size;              // number of bytes written to buffer
+  size_t untruncated_size;  // untruncated message size in bytes
 
   ZMQ_NODISCARD bool truncated() const noexcept {
     return size != untruncated_size;
@@ -878,8 +859,9 @@ using recv_buffer_result_t = std::optional<recv_buffer_size>;
 namespace detail {
 // A C++11 type emulating the most basic
 // operations of std::optional for trivial types
-template <class T> class trivial_optional {
-public:
+template <class T>
+class trivial_optional {
+ public:
   static_assert(std::is_trivial<T>::value, "T must be trivial");
   using value_type = T;
 
@@ -905,24 +887,22 @@ public:
   }
 
   T &value() {
-    if (!_has_value)
-      throw std::exception();
+    if (!_has_value) throw std::exception();
     return _value;
   }
   const T &value() const {
-    if (!_has_value)
-      throw std::exception();
+    if (!_has_value) throw std::exception();
     return _value;
   }
 
   explicit operator bool() const noexcept { return _has_value; }
   bool has_value() const noexcept { return _has_value; }
 
-private:
+ private:
   T _value{};
   bool _has_value{false};
 };
-} // namespace detail
+}  // namespace detail
 
 using send_result_t = detail::trivial_optional<size_t>;
 using recv_result_t = detail::trivial_optional<size_t>;
@@ -931,27 +911,31 @@ using recv_buffer_result_t = detail::trivial_optional<recv_buffer_size>;
 #endif
 
 namespace detail {
-template <class T> constexpr T enum_bit_or(T a, T b) noexcept {
+template <class T>
+constexpr T enum_bit_or(T a, T b) noexcept {
   static_assert(std::is_enum<T>::value, "must be enum");
   using U = typename std::underlying_type<T>::type;
   return static_cast<T>(static_cast<U>(a) | static_cast<U>(b));
 }
-template <class T> constexpr T enum_bit_and(T a, T b) noexcept {
+template <class T>
+constexpr T enum_bit_and(T a, T b) noexcept {
   static_assert(std::is_enum<T>::value, "must be enum");
   using U = typename std::underlying_type<T>::type;
   return static_cast<T>(static_cast<U>(a) & static_cast<U>(b));
 }
-template <class T> constexpr T enum_bit_xor(T a, T b) noexcept {
+template <class T>
+constexpr T enum_bit_xor(T a, T b) noexcept {
   static_assert(std::is_enum<T>::value, "must be enum");
   using U = typename std::underlying_type<T>::type;
   return static_cast<T>(static_cast<U>(a) ^ static_cast<U>(b));
 }
-template <class T> constexpr T enum_bit_not(T a) noexcept {
+template <class T>
+constexpr T enum_bit_not(T a) noexcept {
   static_assert(std::is_enum<T>::value, "must be enum");
   using U = typename std::underlying_type<T>::type;
   return static_cast<T>(~static_cast<U>(a));
 }
-} // namespace detail
+}  // namespace detail
 
 // partially satisfies named requirement BitmaskType
 enum class send_flags : int {
@@ -994,7 +978,7 @@ constexpr recv_flags operator~(recv_flags a) noexcept {
 // http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2018/n4771.pdf
 
 class mutable_buffer {
-public:
+ public:
   constexpr mutable_buffer() noexcept : _data(nullptr), _size(0) {}
   constexpr mutable_buffer(void *p, size_t n) noexcept : _data(p), _size(n) {
 #ifdef ZMQ_EXTENDED_CONSTEXPR
@@ -1012,22 +996,22 @@ public:
     return *this;
   }
 
-private:
+ private:
   void *_data;
   size_t _size;
 };
 
 inline mutable_buffer operator+(const mutable_buffer &mb, size_t n) noexcept {
-  return mutable_buffer(static_cast<char *>(mb.data()) +
-                            (std::min)(n, mb.size()),
-                        mb.size() - (std::min)(n, mb.size()));
+  return mutable_buffer(
+      static_cast<char *>(mb.data()) + (std::min)(n, mb.size()),
+      mb.size() - (std::min)(n, mb.size()));
 }
 inline mutable_buffer operator+(size_t n, const mutable_buffer &mb) noexcept {
   return mb + n;
 }
 
 class const_buffer {
-public:
+ public:
   constexpr const_buffer() noexcept : _data(nullptr), _size(0) {}
   constexpr const_buffer(const void *p, size_t n) noexcept
       : _data(p), _size(n) {
@@ -1047,15 +1031,15 @@ public:
     return *this;
   }
 
-private:
+ private:
   const void *_data;
   size_t _size;
 };
 
 inline const_buffer operator+(const const_buffer &cb, size_t n) noexcept {
-  return const_buffer(static_cast<const char *>(cb.data()) +
-                          (std::min)(n, cb.size()),
-                      cb.size() - (std::min)(n, cb.size()));
+  return const_buffer(
+      static_cast<const char *>(cb.data()) + (std::min)(n, cb.size()),
+      cb.size() - (std::min)(n, cb.size()));
 }
 inline const_buffer operator+(size_t n, const const_buffer &cb) noexcept {
   return cb + n;
@@ -1081,12 +1065,14 @@ inline const_buffer buffer(const const_buffer &cb, size_t n) noexcept {
 }
 
 namespace detail {
-template <class T> struct is_buffer {
+template <class T>
+struct is_buffer {
   static constexpr bool value = std::is_same<T, const_buffer>::value ||
                                 std::is_same<T, mutable_buffer>::value;
 };
 
-template <class T> struct is_pod_like {
+template <class T>
+struct is_pod_like {
   // NOTE: The networking draft N4771 section 16.11 requires
   // T in the buffer functions below to be
   // trivially copyable OR standard layout.
@@ -1127,17 +1113,19 @@ auto buffer_contiguous_sequence(Seq &&seq, size_t n_bytes) noexcept
                 (std::min)(size * sizeof(T), n_bytes));
 }
 
-} // namespace detail
+}  // namespace detail
 
 // C array
-template <class T, size_t N> mutable_buffer buffer(T (&data)[N]) noexcept {
+template <class T, size_t N>
+mutable_buffer buffer(T (&data)[N]) noexcept {
   return detail::buffer_contiguous_sequence(data);
 }
 template <class T, size_t N>
 mutable_buffer buffer(T (&data)[N], size_t n_bytes) noexcept {
   return detail::buffer_contiguous_sequence(data, n_bytes);
 }
-template <class T, size_t N> const_buffer buffer(const T (&data)[N]) noexcept {
+template <class T, size_t N>
+const_buffer buffer(const T (&data)[N]) noexcept {
   return detail::buffer_contiguous_sequence(data);
 }
 template <class T, size_t N>
@@ -1199,8 +1187,8 @@ mutable_buffer buffer(std::basic_string<T, Traits, Allocator> &data,
   return detail::buffer_contiguous_sequence(data, n_bytes);
 }
 template <class T, class Traits, class Allocator>
-const_buffer
-buffer(const std::basic_string<T, Traits, Allocator> &data) noexcept {
+const_buffer buffer(
+    const std::basic_string<T, Traits, Allocator> &data) noexcept {
   return detail::buffer_contiguous_sequence(data);
 }
 template <class T, class Traits, class Allocator>
@@ -1250,7 +1238,7 @@ constexpr const_buffer operator"" _zbuf(const char32_t *str,
                                         size_t len) noexcept {
   return const_buffer(str, len * sizeof(char32_t));
 }
-} // namespace literals
+}  // namespace literals
 
 #ifdef ZMQ_CPP11
 enum class socket_type : int {
@@ -1290,28 +1278,30 @@ namespace sockopt {
 // and arrays with dynamic size (strings, binary data).
 
 // BoolUnit: if true accepts values of type bool (but passed as T into libzmq)
-template <int Opt, class T, bool BoolUnit = false> struct integral_option {};
+template <int Opt, class T, bool BoolUnit = false>
+struct integral_option {};
 
 // NullTerm:
 // 0: binary data
 // 1: null-terminated string (`getsockopt` size includes null)
 // 2: binary (size 32) or Z85 encoder string of size 41 (null included)
-template <int Opt, int NullTerm = 1> struct array_option {};
+template <int Opt, int NullTerm = 1>
+struct array_option {};
 
-#define ZMQ_DEFINE_INTEGRAL_OPT(OPT, NAME, TYPE)                               \
-  using NAME##_t = integral_option<OPT, TYPE, false>;                          \
+#define ZMQ_DEFINE_INTEGRAL_OPT(OPT, NAME, TYPE)      \
+  using NAME##_t = integral_option<OPT, TYPE, false>; \
   ZMQ_INLINE_VAR ZMQ_CONSTEXPR_VAR NAME##_t NAME {}
-#define ZMQ_DEFINE_INTEGRAL_BOOL_UNIT_OPT(OPT, NAME, TYPE)                     \
-  using NAME##_t = integral_option<OPT, TYPE, true>;                           \
+#define ZMQ_DEFINE_INTEGRAL_BOOL_UNIT_OPT(OPT, NAME, TYPE) \
+  using NAME##_t = integral_option<OPT, TYPE, true>;       \
   ZMQ_INLINE_VAR ZMQ_CONSTEXPR_VAR NAME##_t NAME {}
-#define ZMQ_DEFINE_ARRAY_OPT(OPT, NAME)                                        \
-  using NAME##_t = array_option<OPT>;                                          \
+#define ZMQ_DEFINE_ARRAY_OPT(OPT, NAME) \
+  using NAME##_t = array_option<OPT>;   \
   ZMQ_INLINE_VAR ZMQ_CONSTEXPR_VAR NAME##_t NAME {}
-#define ZMQ_DEFINE_ARRAY_OPT_BINARY(OPT, NAME)                                 \
-  using NAME##_t = array_option<OPT, 0>;                                       \
+#define ZMQ_DEFINE_ARRAY_OPT_BINARY(OPT, NAME) \
+  using NAME##_t = array_option<OPT, 0>;       \
   ZMQ_INLINE_VAR ZMQ_CONSTEXPR_VAR NAME##_t NAME {}
-#define ZMQ_DEFINE_ARRAY_OPT_BIN_OR_Z85(OPT, NAME)                             \
-  using NAME##_t = array_option<OPT, 2>;                                       \
+#define ZMQ_DEFINE_ARRAY_OPT_BIN_OR_Z85(OPT, NAME) \
+  using NAME##_t = array_option<OPT, 2>;           \
   ZMQ_INLINE_VAR ZMQ_CONSTEXPR_VAR NAME##_t NAME {}
 
 // deprecated, use zmq::fd_t
@@ -1540,8 +1530,8 @@ ZMQ_DEFINE_INTEGRAL_OPT(ZMQ_TOS, tos, int);
 ZMQ_DEFINE_INTEGRAL_OPT(ZMQ_TYPE, type, int);
 #ifdef ZMQ_CPP11
 ZMQ_DEFINE_INTEGRAL_OPT(ZMQ_TYPE, socket_type, socket_type);
-#endif // ZMQ_CPP11
-#endif // ZMQ_TYPE
+#endif  // ZMQ_CPP11
+#endif  // ZMQ_TYPE
 #ifdef ZMQ_UNSUBSCRIBE
 ZMQ_DEFINE_ARRAY_OPT(ZMQ_UNSUBSCRIBE, unsubscribe);
 #endif
@@ -1586,12 +1576,12 @@ ZMQ_DEFINE_INTEGRAL_BOOL_UNIT_OPT(ZMQ_ZAP_ENFORCE_DOMAIN, zap_enforce_domain,
 ZMQ_DEFINE_ARRAY_OPT(ZMQ_ZAP_DOMAIN, zap_domain);
 #endif
 
-} // namespace sockopt
-#endif // ZMQ_CPP11
+}  // namespace sockopt
+#endif  // ZMQ_CPP11
 
 namespace detail {
 class socket_base {
-public:
+ public:
   socket_base() ZMQ_NOTHROW : _handle(ZMQ_NULLPTR) {}
   ZMQ_EXPLICIT socket_base(void *handle) ZMQ_NOTHROW : _handle(handle) {}
 
@@ -1604,15 +1594,13 @@ public:
   ZMQ_CPP11_DEPRECATED("from 4.7.0, use `set` taking option from zmq::sockopt")
   void setsockopt(int option_, const void *optval_, size_t optvallen_) {
     int rc = zmq_setsockopt(_handle, option_, optval_, optvallen_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   ZMQ_CPP11_DEPRECATED("from 4.7.0, use `get` taking option from zmq::sockopt")
   void getsockopt(int option_, void *optval_, size_t *optvallen_) const {
     int rc = zmq_getsockopt(_handle, option_, optval_, optvallen_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   template <typename T>
@@ -1703,7 +1691,7 @@ public:
                                 size_t init_size = 1024) const {
     if ZMQ_CONSTEXPR_IF (NullTerm == 2) {
       if (init_size == 1024) {
-        init_size = 41; // get as Z85 string
+        init_size = 41;  // get as Z85 string
       }
     }
     std::string str(init_size, '\0');
@@ -1729,32 +1717,28 @@ public:
 
   void bind(const char *addr_) {
     int rc = zmq_bind(_handle, addr_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void unbind(std::string const &addr) { unbind(addr.c_str()); }
 
   void unbind(const char *addr_) {
     int rc = zmq_unbind(_handle, addr_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void connect(std::string const &addr) { connect(addr.c_str()); }
 
   void connect(const char *addr_) {
     int rc = zmq_connect(_handle, addr_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void disconnect(std::string const &addr) { disconnect(addr.c_str()); }
 
   void disconnect(const char *addr_) {
     int rc = zmq_disconnect(_handle, addr_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   ZMQ_DEPRECATED("from 4.7.1, use handle() != nullptr or operator bool")
@@ -1764,22 +1748,18 @@ public:
       "from 4.3.1, use send taking a const_buffer and send_flags")
   size_t send(const void *buf_, size_t len_, int flags_ = 0) {
     int nbytes = zmq_send(_handle, buf_, len_, flags_);
-    if (nbytes >= 0)
-      return static_cast<size_t>(nbytes);
-    if (zmq_errno() == EAGAIN)
-      return 0;
+    if (nbytes >= 0) return static_cast<size_t>(nbytes);
+    if (zmq_errno() == EAGAIN) return 0;
     throw error_t();
   }
 
   ZMQ_CPP11_DEPRECATED("from 4.3.1, use send taking message_t and send_flags")
   bool send(message_t &msg_,
-            int flags_ = 0) // default until removed
+            int flags_ = 0)  // default until removed
   {
     int nbytes = zmq_msg_send(msg_.handle(), _handle, flags_);
-    if (nbytes >= 0)
-      return true;
-    if (zmq_errno() == EAGAIN)
-      return false;
+    if (nbytes >= 0) return true;
+    if (zmq_errno() == EAGAIN) return false;
     throw error_t();
   }
 
@@ -1790,17 +1770,15 @@ public:
   bool send(T first, T last, int flags_ = 0) {
     zmq::message_t msg(first, last);
     int nbytes = zmq_msg_send(msg.handle(), _handle, flags_);
-    if (nbytes >= 0)
-      return true;
-    if (zmq_errno() == EAGAIN)
-      return false;
+    if (nbytes >= 0) return true;
+    if (zmq_errno() == EAGAIN) return false;
     throw error_t();
   }
 
 #ifdef ZMQ_HAS_RVALUE_REFS
   ZMQ_CPP11_DEPRECATED("from 4.3.1, use send taking message_t and send_flags")
   bool send(message_t &&msg_,
-            int flags_ = 0) // default until removed
+            int flags_ = 0)  // default until removed
   {
 #ifdef ZMQ_CPP11
     return send(msg_, static_cast<send_flags>(flags_)).has_value();
@@ -1814,19 +1792,15 @@ public:
   send_result_t send(const_buffer buf, send_flags flags = send_flags::none) {
     const int nbytes =
         zmq_send(_handle, buf.data(), buf.size(), static_cast<int>(flags));
-    if (nbytes >= 0)
-      return static_cast<size_t>(nbytes);
-    if (zmq_errno() == EAGAIN)
-      return {};
+    if (nbytes >= 0) return static_cast<size_t>(nbytes);
+    if (zmq_errno() == EAGAIN) return {};
     throw error_t();
   }
 
   send_result_t send(message_t &msg, send_flags flags) {
     int nbytes = zmq_msg_send(msg.handle(), _handle, static_cast<int>(flags));
-    if (nbytes >= 0)
-      return static_cast<size_t>(nbytes);
-    if (zmq_errno() == EAGAIN)
-      return {};
+    if (nbytes >= 0) return static_cast<size_t>(nbytes);
+    if (zmq_errno() == EAGAIN) return {};
     throw error_t();
   }
 
@@ -1839,10 +1813,8 @@ public:
       "from 4.3.1, use recv taking a mutable_buffer and recv_flags")
   size_t recv(void *buf_, size_t len_, int flags_ = 0) {
     int nbytes = zmq_recv(_handle, buf_, len_, flags_);
-    if (nbytes >= 0)
-      return static_cast<size_t>(nbytes);
-    if (zmq_errno() == EAGAIN)
-      return 0;
+    if (nbytes >= 0) return static_cast<size_t>(nbytes);
+    if (zmq_errno() == EAGAIN) return 0;
     throw error_t();
   }
 
@@ -1850,10 +1822,8 @@ public:
       "from 4.3.1, use recv taking a reference to message_t and recv_flags")
   bool recv(message_t *msg_, int flags_ = 0) {
     int nbytes = zmq_msg_recv(msg_->handle(), _handle, flags_);
-    if (nbytes >= 0)
-      return true;
-    if (zmq_errno() == EAGAIN)
-      return false;
+    if (nbytes >= 0) return true;
+    if (zmq_errno() == EAGAIN) return false;
     throw error_t();
   }
 
@@ -1868,8 +1838,7 @@ public:
           (std::min)(static_cast<size_t>(nbytes), buf.size()),
           static_cast<size_t>(nbytes)};
     }
-    if (zmq_errno() == EAGAIN)
-      return {};
+    if (zmq_errno() == EAGAIN) return {};
     throw error_t();
   }
 
@@ -1881,8 +1850,7 @@ public:
       assert(msg.size() == static_cast<size_t>(nbytes));
       return static_cast<size_t>(nbytes);
     }
-    if (zmq_errno() == EAGAIN)
-      return {};
+    if (zmq_errno() == EAGAIN) return {};
     throw error_t();
   }
 #endif
@@ -1890,14 +1858,12 @@ public:
 #if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 2, 0)
   void join(const char *group) {
     int rc = zmq_join(_handle, group);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void leave(const char *group) {
     int rc = zmq_leave(_handle, group);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 #endif
 
@@ -1911,26 +1877,24 @@ public:
   // operator void* is removed from socket_t
   ZMQ_EXPLICIT operator bool() ZMQ_NOTHROW { return _handle != ZMQ_NULLPTR; }
 
-protected:
+ protected:
   void *_handle;
 
-private:
+ private:
   void set_option(int option_, const void *optval_, size_t optvallen_) {
     int rc = zmq_setsockopt(_handle, option_, optval_, optvallen_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 
   void get_option(int option_, void *optval_, size_t *optvallen_) const {
     int rc = zmq_getsockopt(_handle, option_, optval_, optvallen_);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
   }
 };
-} // namespace detail
+}  // namespace detail
 
 struct from_handle_t {
-  struct _private {}; // disabling use other than with from_handle
+  struct _private {};  // disabling use other than with from_handle
   ZMQ_CONSTEXPR_FN ZMQ_EXPLICIT from_handle_t(_private /*p*/) ZMQ_NOTHROW {}
 };
 
@@ -1940,7 +1904,7 @@ ZMQ_CONSTEXPR_VAR from_handle_t from_handle =
 // A non-owning nullable reference to a socket.
 // The reference is invalidated on socket close or destruction.
 class socket_ref : public detail::socket_base {
-public:
+ public:
   socket_ref() ZMQ_NOTHROW : detail::socket_base() {}
 #ifdef ZMQ_CPP11
   socket_ref(std::nullptr_t) ZMQ_NOTHROW : detail::socket_base() {}
@@ -1989,31 +1953,31 @@ inline bool operator>=(const detail::socket_base &a,
   return !(a < b);
 }
 
-} // namespace zmq
+}  // namespace zmq
 
 #ifdef ZMQ_CPP11
 namespace std {
-template <> struct hash<zmq::socket_ref> {
+template <>
+struct hash<zmq::socket_ref> {
   size_t operator()(zmq::socket_ref sr) const ZMQ_NOTHROW {
     return hash<void *>()(sr.handle());
   }
 };
-} // namespace std
+}  // namespace std
 #endif
 
 namespace zmq {
 class socket_t : public detail::socket_base {
   friend class monitor_t;
 
-public:
+ public:
   socket_t() ZMQ_NOTHROW : detail::socket_base(ZMQ_NULLPTR),
                            ctxptr(ZMQ_NULLPTR) {}
 
   socket_t(context_t &context_, int type_)
       : detail::socket_base(zmq_socket(context_.handle(), type_)),
         ctxptr(context_.handle()) {
-    if (_handle == ZMQ_NULLPTR)
-      throw error_t();
+    if (_handle == ZMQ_NULLPTR) throw error_t();
   }
 
 #ifdef ZMQ_CPP11
@@ -2058,7 +2022,7 @@ public:
 
   operator socket_ref() ZMQ_NOTHROW { return socket_ref(from_handle, _handle); }
 
-private:
+ private:
   void *ctxptr;
 
   socket_t(const socket_t &) ZMQ_DELETED_FUNCTION;
@@ -2067,10 +2031,8 @@ private:
   // used by monitor_t
   socket_t(void *context_, int type_)
       : detail::socket_base(zmq_socket(context_, type_)), ctxptr(context_) {
-    if (_handle == ZMQ_NULLPTR)
-      throw error_t();
-    if (ctxptr == ZMQ_NULLPTR)
-      throw error_t();
+    if (_handle == ZMQ_NULLPTR) throw error_t();
+    if (ctxptr == ZMQ_NULLPTR) throw error_t();
   }
 };
 
@@ -2079,15 +2041,13 @@ inline void swap(socket_t &a, socket_t &b) ZMQ_NOTHROW { a.swap(b); }
 ZMQ_DEPRECATED("from 4.3.1, use proxy taking socket_t objects")
 inline void proxy(void *frontend, void *backend, void *capture) {
   int rc = zmq_proxy(frontend, backend, capture);
-  if (rc != 0)
-    throw error_t();
+  if (rc != 0) throw error_t();
 }
 
 inline void proxy(socket_ref frontend, socket_ref backend,
                   socket_ref capture = socket_ref()) {
   int rc = zmq_proxy(frontend.handle(), backend.handle(), capture.handle());
-  if (rc != 0)
-    throw error_t();
+  if (rc != 0) throw error_t();
 }
 
 #ifdef ZMQ_HAS_PROXY_STEERABLE
@@ -2095,21 +2055,19 @@ ZMQ_DEPRECATED("from 4.3.1, use proxy_steerable taking socket_t objects")
 inline void proxy_steerable(void *frontend, void *backend, void *capture,
                             void *control) {
   int rc = zmq_proxy_steerable(frontend, backend, capture, control);
-  if (rc != 0)
-    throw error_t();
+  if (rc != 0) throw error_t();
 }
 
 inline void proxy_steerable(socket_ref frontend, socket_ref backend,
                             socket_ref capture, socket_ref control) {
   int rc = zmq_proxy_steerable(frontend.handle(), backend.handle(),
                                capture.handle(), control.handle());
-  if (rc != 0)
-    throw error_t();
+  if (rc != 0) throw error_t();
 }
 #endif
 
 class monitor_t {
-public:
+ public:
   monitor_t() : _socket(), _monitor_socket() {}
 
   virtual ~monitor_t() { close(); }
@@ -2149,8 +2107,7 @@ public:
 
   void init(socket_t &socket, const char *addr_, int events = ZMQ_EVENT_ALL) {
     int rc = zmq_socket_monitor(socket.handle(), addr_, events);
-    if (rc != 0)
-      throw error_t();
+    if (rc != 0) throw error_t();
 
     _socket = socket;
     _monitor_socket = socket_t(socket.ctxptr, ZMQ_PAIR);
@@ -2177,8 +2134,7 @@ public:
 
 #ifdef ZMQ_EVENT_MONITOR_STOPPED
   void abort() {
-    if (_socket)
-      zmq_socket_monitor(_socket.handle(), ZMQ_NULLPTR, 0);
+    if (_socket) zmq_socket_monitor(_socket.handle(), ZMQ_NULLPTR, 0);
 
     _socket = socket_ref();
   }
@@ -2270,14 +2226,13 @@ public:
     (void)addr_;
   }
 
-protected:
+ protected:
   bool process_event(short events) {
     zmq::message_t eventMsg;
 
     if (events & ZMQ_POLLIN) {
       int rc = zmq_msg_recv(eventMsg.handle(), _monitor_socket.handle(), 0);
-      if (rc == -1 && zmq_errno() == ETERM)
-        return false;
+      if (rc == -1 && zmq_errno() == ETERM) return false;
       assert(rc != -1);
 
     } else {
@@ -2318,61 +2273,61 @@ protected:
 #endif
 
     switch (event->event) {
-    case ZMQ_EVENT_CONNECTED:
-      on_event_connected(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_CONNECT_DELAYED:
-      on_event_connect_delayed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_CONNECT_RETRIED:
-      on_event_connect_retried(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_LISTENING:
-      on_event_listening(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_BIND_FAILED:
-      on_event_bind_failed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_ACCEPTED:
-      on_event_accepted(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_ACCEPT_FAILED:
-      on_event_accept_failed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_CLOSED:
-      on_event_closed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_CLOSE_FAILED:
-      on_event_close_failed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_DISCONNECTED:
-      on_event_disconnected(*event, address.c_str());
-      break;
-#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 3, 0) ||                                \
+      case ZMQ_EVENT_CONNECTED:
+        on_event_connected(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_CONNECT_DELAYED:
+        on_event_connect_delayed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_CONNECT_RETRIED:
+        on_event_connect_retried(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_LISTENING:
+        on_event_listening(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_BIND_FAILED:
+        on_event_bind_failed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_ACCEPTED:
+        on_event_accepted(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_ACCEPT_FAILED:
+        on_event_accept_failed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_CLOSED:
+        on_event_closed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_CLOSE_FAILED:
+        on_event_close_failed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_DISCONNECTED:
+        on_event_disconnected(*event, address.c_str());
+        break;
+#if ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 3, 0) || \
     (defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 2, 3))
-    case ZMQ_EVENT_HANDSHAKE_FAILED_NO_DETAIL:
-      on_event_handshake_failed_no_detail(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_HANDSHAKE_FAILED_PROTOCOL:
-      on_event_handshake_failed_protocol(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_HANDSHAKE_FAILED_AUTH:
-      on_event_handshake_failed_auth(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_HANDSHAKE_SUCCEEDED:
-      on_event_handshake_succeeded(*event, address.c_str());
-      break;
+      case ZMQ_EVENT_HANDSHAKE_FAILED_NO_DETAIL:
+        on_event_handshake_failed_no_detail(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_HANDSHAKE_FAILED_PROTOCOL:
+        on_event_handshake_failed_protocol(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_HANDSHAKE_FAILED_AUTH:
+        on_event_handshake_failed_auth(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_HANDSHAKE_SUCCEEDED:
+        on_event_handshake_succeeded(*event, address.c_str());
+        break;
 #elif defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 2, 1)
-    case ZMQ_EVENT_HANDSHAKE_FAILED:
-      on_event_handshake_failed(*event, address.c_str());
-      break;
-    case ZMQ_EVENT_HANDSHAKE_SUCCEED:
-      on_event_handshake_succeed(*event, address.c_str());
-      break;
+      case ZMQ_EVENT_HANDSHAKE_FAILED:
+        on_event_handshake_failed(*event, address.c_str());
+        break;
+      case ZMQ_EVENT_HANDSHAKE_SUCCEED:
+        on_event_handshake_succeed(*event, address.c_str());
+        break;
 #endif
-    default:
-      on_event_unknown(*event, address.c_str());
-      break;
+      default:
+        on_event_unknown(*event, address.c_str());
+        break;
     }
 
     return true;
@@ -2380,7 +2335,7 @@ protected:
 
   socket_ref monitor_socket() { return _monitor_socket; }
 
-private:
+ private:
   monitor_t(const monitor_t &) ZMQ_DELETED_FUNCTION;
   void operator=(const monitor_t &) ZMQ_DELETED_FUNCTION;
 
@@ -2388,13 +2343,12 @@ private:
   socket_t _monitor_socket;
 
   void close() ZMQ_NOTHROW {
-    if (_socket)
-      zmq_socket_monitor(_socket.handle(), ZMQ_NULLPTR, 0);
+    if (_socket) zmq_socket_monitor(_socket.handle(), ZMQ_NULLPTR, 0);
     _monitor_socket.close();
   }
 };
 
-#if defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&                      \
+#if defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) && \
     defined(ZMQ_HAVE_POLLER)
 
 // polling events
@@ -2422,20 +2376,21 @@ constexpr event_flags operator~(event_flags a) noexcept {
 struct no_user_data;
 
 // layout compatible with zmq_poller_event_t
-template <class T = no_user_data> struct poller_event {
+template <class T = no_user_data>
+struct poller_event {
   socket_ref socket;
   ::zmq::fd_t fd;
   T *user_data;
   event_flags events;
 };
 
-template <typename T = no_user_data> class poller_t {
-public:
+template <typename T = no_user_data>
+class poller_t {
+ public:
   using event_type = poller_event<T>;
 
   poller_t() : poller_ptr(zmq_poller_new()) {
-    if (!poller_ptr)
-      throw error_t();
+    if (!poller_ptr) throw error_t();
   }
 
   template <typename Dummy = void,
@@ -2495,8 +2450,7 @@ public:
         reinterpret_cast<zmq_poller_event_t *>(poller_events.data()),
         static_cast<int>(poller_events.size()),
         static_cast<long>(timeout.count()));
-    if (rc > 0)
-      return static_cast<size_t>(rc);
+    if (rc > 0) return static_cast<size_t>(rc);
 
 #if ZMQ_VERSION >= ZMQ_MAKE_VERSION(4, 2, 3)
     if (zmq_errno() == EAGAIN)
@@ -2516,7 +2470,7 @@ public:
   }
 #endif
 
-private:
+ private:
   struct destroy_poller_t {
     void operator()(void *ptr) noexcept {
       int rc = zmq_poller_destroy(&ptr);
@@ -2540,13 +2494,13 @@ private:
     }
   }
 };
-#endif //  defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&
-       //  defined(ZMQ_HAVE_POLLER)
+#endif  //  defined(ZMQ_BUILD_DRAFT_API) && defined(ZMQ_CPP11) &&
+        //  defined(ZMQ_HAVE_POLLER)
 
 inline std::ostream &operator<<(std::ostream &os, const message_t &msg) {
   return os << msg.str();
 }
 
-} // namespace zmq
+}  // namespace zmq
 
-#endif // __ZMQ_HPP_INCLUDED__
+#endif  // __ZMQ_HPP_INCLUDED__
